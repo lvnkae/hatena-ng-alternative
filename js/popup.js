@@ -3,15 +3,16 @@
  */
 class Badge  {
 
-	constructor() {
-	}
-	update(storage) {
-		if (storage.json.active) {
+    constructor() {
+    }
+    
+    update(storage) {
+        if (storage.json.active) {
             chrome.browserAction.setIcon({ path : "../img/badge_on.png"});
         } else {
             chrome.browserAction.setIcon({ path : "../img/badge_off.png"});
         }
-	}
+    }
 };
 
 /*!
@@ -20,15 +21,15 @@ class Badge  {
 class Popup {
 
     constructor() {
-    	this.initialize();
+        this.initialize();
     }
 
-	initialize() {
-		this.badge = new Badge();
+    initialize() {
+        this.badge = new Badge();
         this.storage = new StorageData();
-		this.storage.load().then(()=> {
-		    this.updateCheckbox();
-		    this.updateTextarea();
+        this.storage.load().then(()=> {
+            this.updateCheckbox();
+            this.updateTextarea();
             this.badge.update(this.storage);
         });
         //
@@ -62,7 +63,7 @@ class Popup {
         this.button_save().click(()=> {
             this.button_save_click();
         });
-	}
+    }
 
     checkbox_sw_filter() {
         return  $("input[name=sw_filter]");
