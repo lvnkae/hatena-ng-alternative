@@ -43,13 +43,14 @@ class StorageData {
     }
 
     update_text() {
+        const nlc = text_utility.new_line_code();
         this.ng_domain_text = "";
         for (const ngu of this.json.ng_domain) {
-            this.ng_domain_text += ngu.keyword + text_utility.new_line_code();
+            this.ng_domain_text += ngu.keyword + nlc;
         }
         this.ng_title_text = "";
         for (const ngt of this.json.ng_title) {
-            this.ng_title_text += ngt+ text_utility.new_line_code();
+            this.ng_title_text += ngt + nlc;
         }
     }
 }

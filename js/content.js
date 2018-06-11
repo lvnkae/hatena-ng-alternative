@@ -402,7 +402,7 @@ class HatenaBookmarkFilter {
                         }
                     }
                 } (href, ff.sub_dirs)) {
-                    return function(title, black_titles) {
+                    if (function(title, black_titles) {
                         if (black_titles.length == 0) {
                             return true;
                         }
@@ -411,12 +411,15 @@ class HatenaBookmarkFilter {
                                 return true;
                             }
                         }
-                    } (title, ff.black_titles);
+                    } (title, ff.black_titles)) {
+                        return true;
+                    }
                 }
             }
         }
+        const href_l = href.toLowerCase();
         for (const ngd of this.storage.json.ng_domain) {
-            if (href.indexOf(ngd.keyword) >= 0) {
+            if (href_l.indexOf(ngd.keyword.toLowerCase()) >= 0) {
                 if (function(href, sub_dirs) {
                     if (sub_dirs.length == 0) {
                         return true;
@@ -426,22 +429,24 @@ class HatenaBookmarkFilter {
                             return true;
                         }
                     }
-                } (href, ngd.sub_dirs)) {
-                    return function(title, black_titles) {
+                } (href_l, ngd.sub_dirs)) {
+                    if (function(title, black_titles) {
                         if (black_titles.length == 0) {
                             return true;
                         }
                         for (const btitle of black_titles) {
-                            if (title.indexOf(btitle) >= 0) {
+                            if (text_utility.regexp_indexOf(btitle, title)) {
                                 return true;
                             }
                         }
-                    } (title, ngd.black_titles);
+                    } (title, ngd.black_titles)) {
+                        return true;
+                    }
                 }
             }
         }
         for (const ngt of this.storage.json.ng_title) {
-            if (title.indexOf(ngt) >= 0) {
+            if (text_utility.regexp_indexOf(ngt, title)) {
                 return true;
             }
         }
