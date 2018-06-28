@@ -52,6 +52,12 @@ class Popup {
         this.textarea_filter_title().keyup(()=> {
             this.textarea_filter_title_keyup();
         });
+        this.textarea_filter_user().keyup(()=> {
+            this.textarea_filter_user_keyup();
+        });
+        this.textarea_filter_comment().keyup(()=> {
+            this.textarea_filter_comment_keyup();
+        });
         this.textarea_filter_ex_title().keyup(()=> {
             this.textarea_filter_ex_title_keyup();
         });
@@ -77,6 +83,12 @@ class Popup {
     textarea_filter_title() {
         return $("textarea[name=filter_title]");
     }
+    textarea_filter_user() {
+        return $("textarea[name=filter_user]");
+    }
+    textarea_filter_comment() {
+        return $("textarea[name=filter_comment]");
+    }
     textarea_filter_ex_title() {
         return $("textarea[name=filter_ex_title]");
     }
@@ -87,6 +99,16 @@ class Popup {
     }
     textarea_filter_title_keyup() {
         if (this.textarea_filter_title().val() != this.storage.ng_title_text) {
+            this.button_save().prop("disabled", false);
+        }
+    }
+    textarea_filter_user_keyup() {
+        if (this.textarea_filter_user().val() != this.storage.ng_user_text) {
+            this.button_save().prop("disabled", false);
+        }
+    }
+    textarea_filter_comment_keyup() {
+        if (this.textarea_filter_comment().val() != this.storage.ng_comment_text) {
             this.button_save().prop("disabled", false);
         }
     }
@@ -147,6 +169,12 @@ class Popup {
     is_selected_ng_title() {
         return this.selectbox_filter().val() == "ng_title";
     }
+    is_selected_ng_user() {
+        return this.selectbox_filter().val() == "ng_user";
+    }
+    is_selected_ng_comment() {
+        return this.selectbox_filter().val() == "ng_comment";
+    }
     selectbox_value_ex_title() {
         return "ng_ex_title";
     }
@@ -155,14 +183,32 @@ class Popup {
         if (this.is_selected_ng_domain()) {
             this.textarea_filter_domain().show();
             this.textarea_filter_title().hide();
+            this.textarea_filter_user().hide();
+            this.textarea_filter_comment().hide();
             this.textarea_filter_ex_title().hide();
         } else if (this.is_selected_ng_title()) {
             this.textarea_filter_domain().hide();
             this.textarea_filter_title().show();
+            this.textarea_filter_user().hide();
+            this.textarea_filter_comment().hide();
+            this.textarea_filter_ex_title().hide();
+        } else if (this.is_selected_ng_user()) {
+            this.textarea_filter_domain().hide();
+            this.textarea_filter_title().hide();
+            this.textarea_filter_user().show();
+            this.textarea_filter_comment().hide();
+            this.textarea_filter_ex_title().hide();
+        } else if (this.is_selected_ng_comment()) {
+            this.textarea_filter_domain().hide();
+            this.textarea_filter_title().hide();
+            this.textarea_filter_user().hide();
+            this.textarea_filter_comment().show();
             this.textarea_filter_ex_title().hide();
         } else {
             this.textarea_filter_domain().hide();
             this.textarea_filter_title().hide();
+            this.textarea_filter_user().hide();
+            this.textarea_filter_comment().hide();
             this.textarea_filter_ex_title().show();
         }
     }
@@ -202,6 +248,22 @@ class Popup {
                 }
             }
         }
+        {
+            var filter = text_utility.split_by_new_line(this.textarea_filter_user().val());
+            for (const word of filter) {
+                if (word != "") {
+                    this.storage.json.ng_user.push(word);
+                }
+            }
+        }
+        {
+            var filter = text_utility.split_by_new_line(this.textarea_filter_comment().val());
+            for (const word of filter) {
+                if (word != "") {
+                    this.storage.json.ng_comment.push(word);
+                }
+            }
+        }
         this.storage.json.active = this.checkbox_sw_filter().prop("checked");
         this.storage.json.ng_thumbnail = this.checkbox_sw_thumbnail().prop("checked");
         this.storage.save();
@@ -226,6 +288,8 @@ class Popup {
     updateTextarea() {
         this.textarea_filter_domain().val(this.storage.ng_domain_text);
         this.textarea_filter_title().val(this.storage.ng_title_text);
+        this.textarea_filter_user().val(this.storage.ng_user_text);
+        this.textarea_filter_comment().val(this.storage.ng_comment_text);
         // ex_title用の疑似textarea
         {
             const nlc = text_utility.new_line_code();

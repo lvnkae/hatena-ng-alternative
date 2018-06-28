@@ -14,11 +14,15 @@ class TextUtil {
             if (word.length > 0 &&
                 word != "\r\n" &&
                 word != "\r" &&
-                word !== "\n") {
+                word != "\n") {
                 ret.push(word);
             }
         }
         return ret;
+    }
+
+    remove_new_line_and_space(string) {
+        return string.replace(/[\s|\r\n|\r|\n]+/g, "");
     }
 
     /*!
