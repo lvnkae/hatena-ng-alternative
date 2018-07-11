@@ -237,6 +237,7 @@ class HatenaBookmarkFilter {
                 this.filtering_bookmark_entry_relation();
                 this.filtering_bookmark_entry_recommend();
                 this.filtering_bookmark_entry_pager();
+                this.filtering_bookmark_entry_user();
             } else if (loc.in_search_page()) {
                 this.filtering_bookmark_centerarticle();
             } else if (loc.in_user_bookmark_page() ||
@@ -607,6 +608,19 @@ class HatenaBookmarkFilter {
             const username = this.cut_username_from_id($(a_tag[0]).text());
             if (this.user_filter(username)) {
                 $(elem_username).parent().parent().detach();
+            }
+        });
+    }
+
+    /*!
+     *  @brief  エントリページの「ブックマークしたユーザー」にフィルタをかける
+     */ 
+    filtering_bookmark_entry_user()
+    {
+        $("li.bookmarker.js-bookmarker").each((inx, elem_bookmarker)=> {
+            const bookmarker = $(elem_bookmarker).attr("data-bookmarker");
+            if (this.user_filter(bookmarker)) {
+                $(elem_bookmarker).detach();
             }
         });
     }
