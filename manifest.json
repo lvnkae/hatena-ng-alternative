@@ -24,7 +24,7 @@
     },
    "manifest_version": 2,
    "name": "はてなフィルタ",
-   "permissions": [ "tabs", "storage", "http://s.hatena.com/entry.json/*", "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*" ],
+   "permissions": [ "storage", "http://s.hatena.com/entry.json/*", "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*" ],
    "short_name": "HatenaFilter",
-   "version": "1.0.0"
+   "version": "1.0.0.1"
 }
