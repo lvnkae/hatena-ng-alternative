@@ -35,6 +35,7 @@ class StorageData {
         this.json = {}
         this.json.active = true;        // フィルタ 有効/無効
         this.json.ng_thumbnail = false; // サムネイル除去 有効/無効
+        this.mark_owned_star = true;    // ★付けたブコメ強調表示 有効/無効
         this.json.ng_domain = [];       // ドメインフィルタ
         this.json.ng_title = [];        // タイトルフィルタ
         this.json.ng_user = [];         // ユーザフィルタ

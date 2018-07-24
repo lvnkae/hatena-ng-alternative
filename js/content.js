@@ -146,10 +146,9 @@ class HatenaBookmarkFilter {
             //
             document.addEventListener("DOMContentLoaded", ()=> {
                 const ldata = this.storage.json;
-                if (!ldata.active) {
-                    return;
+                if (ldata.active) {
+                    this.filtering_bookmark();
                 }
-                this.filtering_bookmark();
                 // DOM構築完了後に追加される遅延elementもフィルタにかけたい
                 // → observerでelement追加をhookしfiltering実行
                 const loc = gContent.current_location;
@@ -193,14 +192,19 @@ class HatenaBookmarkFilter {
                     elem_bookmark.push($(".hotentry.box.selected")[0]);
                 }
                 //
-                for (var e of elem_bookmark) {
-                    this.bookmark_observer.observe(e, {
-                        childList: true,
-                        subtree: true,
-                    });
+                if (ldata.active) {
+                    for (var e of elem_bookmark) {
+                        this.bookmark_observer.observe(e, {
+                            childList: true,
+                            subtree: true,
+                        });
+                    }
                 }
-                if ((ldata.ng_user != null && ldata.ng_user.length > 0) ||
-                    (ldata.ng_comment != null && ldata.ng_comment.length > 0)) {
+                if ((ldata.mark_owned_star == null || ldata.mark_owned_star) ||
+                    (ldata.active &&
+                     ((ldata.ng_user != null && ldata.ng_user.length > 0) ||
+                      (ldata.ng_comment != null && ldata.ng_comment.length > 0)))
+                    ){
                     for (var e of elem_comment) {
                         this.comment_observer.observe(e, {
                             childList: true,
@@ -208,7 +212,7 @@ class HatenaBookmarkFilter {
                         });
                     }
                 }
-                if (ldata.ng_user != null && ldata.ng_user.length > 0) {
+                if (ldata.active && ldata.ng_user != null && ldata.ng_user.length > 0) {
                     for (var e of elem_blog) {
                         this.blog_observer.observe(e, {
                             childList: true,
@@ -631,12 +635,15 @@ class HatenaBookmarkFilter {
      */
     filtering_bookmark_entry_comment()
     {
+        const b_active = this.storage.json.active;
+        //
         $("span.entry-comment-username").each((inx, elem_username)=> {
             const parent = $(elem_username).parent();
             if ($(parent).attr("star_filtered") != null) {
                 // フィルタ済みでもinner_star展開時の処理は必要
                 const elem_stars = $(parent).find("span.hatena-star-star-container");
                 this.filtering_bookmark_stars(elem_stars);
+                this.marking_owned_star_comment(elem_username, null, elem_stars);
                 return;
             }
             const a_tag = $(elem_username).find("a");
@@ -645,7 +652,7 @@ class HatenaBookmarkFilter {
             }
             const username = $(a_tag[0]).text();
             // コメントフィルタ
-            if ($(parent).attr("comment_filtered") == null) {
+            if (b_active && $(parent).attr("comment_filtered") == null) {
                 if (this.user_filter(username)) {
                     $(parent).detach();
                     return;
@@ -661,9 +668,10 @@ class HatenaBookmarkFilter {
                 $(parent).attr("comment_filtered", "");
             }
             // ★フィルタ
-            if (this.filtering_bookmark_star_star_container(username, parent)) {
+            this.filtering_bookmark_star_star_container(username, parent, ()=>{
                 $(parent).attr("star_filtered", "");
-            }
+                this.marking_owned_star_comment(elem_username, username, null);
+            });
         });
     }
 
@@ -671,12 +679,15 @@ class HatenaBookmarkFilter {
      *  @brief  ★containerフィルタ
      *  @param  username    注目ブコメのオーサ名
      *  @param  parent      注目ブコメの親ノード
+     *  @param  callback    フィルタ完了コールバック
+     *  @note   Promise返すようにしたら負荷が跳ね上がったのでcallback式で妥協
+     *  @note   ブクマ数+inner_star数(多い時は1000over)分のPromiseが生成されるので重い
      */
-    filtering_bookmark_star_star_container(username, parent)
+    filtering_bookmark_star_star_container(username, parent, callback)
     {
         const elem_stars = $(parent).find("span.hatena-star-star-container");
         if (elem_stars.length != 1 || elem_stars.children().length <= 1) {
-            return false; // まだフィルタかけられない
+            return; // まだフィルタかけられない
         }
         var elem_inner_star = [];
         this.each_inner_count(elem_stars, (elem, color)=> {
@@ -685,7 +696,7 @@ class HatenaBookmarkFilter {
             }
         });
         if (!$.isEmptyObject(elem_inner_star)) {
-            const json = this.filtered_star_json[username];
+            const json = this.star_json[username];
             if (json != null) {
                 // 取得済み
                 // ※popular/recent/bookmark-allと同じブコメが最大で3回フィルタされるので
@@ -693,143 +704,19 @@ class HatenaBookmarkFilter {
                 this.filtering_bookmark_entry_starset_core(json,
                                                            elem_stars,
                                                            elem_inner_star);
-                return true;
+                callback();
+            } else {
+                const anchor = $($(parent).find("a.js-bookmark-anchor-path")[0]).attr("href");
+                this.filtering_bookmark_entry_starset(username,
+                                                      anchor,
+                                                      elem_stars,
+                                                      elem_inner_star,
+                                                      callback);
             }
-            const anchor = $($(parent).find("a.js-bookmark-anchor-path")[0]).attr("href");
-            this.filtering_bookmark_entry_starset(username,
-                                                  anchor,
-                                                  elem_stars,
-                                                  elem_inner_star);
         } else {
             this.filtering_bookmark_stars(elem_stars);
+            callback();
         }
-        return true;
-    }
-
-    /*!
-     *  @brief  ★集合フィルタ
-     *  @param  username        注目ブコメのオーサ名
-     *  @param  anchor          APIキー
-     *  @param  elem_stars      ★関連の根ノード(span.hatena-star-star-container)
-     *  @param  elem_inner_star ★集合の数表示ノード(array)
-     */
-    filtering_bookmark_entry_starset(username, anchor, elem_stars, elem_inner_star)
-    {
-        const b_req = this.requested_json[username];
-        if (b_req != null) {
-            // 応答待ち
-            return;
-        }
-        //
-        const api_url = 'http://s.hatena.com/entry.json?uri=' + encodeURIComponent(anchor);
-        $.ajax({
-            url: api_url,
-            type: 'GET',
-            dataType: 'json',
-            timeout: 1000,
-        }).done((data)=> {
-            this.requested_json[username] = true;
-            var b_filtered = false;
-            if (data.entries.length == 0) {
-                return; // 正しく取得できなかった
-                        // URLによって記事★が取れないことがある。謎。
-            }
-            const entry = data.entries[0];
-            var filtered_entry = {
-                stars: [],
-                uri: entry.uri,
-            };
-            var c_stars_buff = [];
-            // normal star
-            for (const n_star of entry.stars) {
-                if (this.user_filter(n_star.name)) {
-                    b_filtered = true;
-                } else {
-                    if (n_star.count != null) {
-                        for (var inx = 0; inx < n_star.count; inx++) {
-                            c_stars_buff.push({name: n_star.name,
-                                               quote: n_star.quote});
-                        }
-                    } else {
-                        c_stars_buff.push(n_star);
-                    }
-                }
-                filtered_entry.stars['yellow'] = c_stars_buff.slice();
-            }
-            // color star
-            if (entry.colored_stars != null) {
-                for (const c_stars of entry.colored_stars) {
-                    c_stars_buff = [];
-                    for (const c_star of c_stars.stars) {
-                        if (this.user_filter(c_star.name)) {
-                            b_filtered = true;
-                        } else {
-                            if (c_star.count != null) {
-                                for (var inx = 0; inx < c_star.count; inx++) {
-                                    c_stars_buff.push({name: c_star.name,
-                                                       quote: c_star.quote});
-                                }
-                            } else {
-                                c_stars_buff.push(c_star);
-                            }
-                        }
-                    }
-                    filtered_entry.stars[c_stars.color] = c_stars_buff.slice();
-                }
-            }
-            if (!b_filtered) {
-                this.filtered_star_json[username] = {};
-            } else {
-                this.filtered_star_json[username] = filtered_entry;
-                this.filtering_bookmark_entry_starset_core(filtered_entry,
-                                                           elem_stars,
-                                                           elem_inner_star);
-            }
-        }).fail((data, sub)=> {
-            //console.log(data);
-        });
-    }
-
-    /*!
-     *  @brief  ★集合フィルタ(core)
-     *  @param  json            1ブコメ/記事分の★情報(json)
-     *  @param  elem_stars      ★関連の根ノード(span.hatena-star-star-container)
-     *  @param  elem_inner_star ★集合の数表示ノード(array)
-     */
-    filtering_bookmark_entry_starset_core(json, elem_stars, elem_inner_star)
-    {
-        const min_set_count = 15;
-        const num_subset = 2;
-        const min_group_count = min_set_count + num_subset;
-        //
-        if (!$.isEmptyObject(json)) {
-            for (const color in elem_inner_star) {
-                const stars = json.stars[color];
-                if (stars != null) {
-                    var elem_isc = elem_inner_star[color];
-                    var top_star = $(elem_isc).prev();
-                    var last_star = $(elem_isc).next();
-                    // inner_countとその前後の★を消す
-                    $(top_star).detach();
-                    $(last_star).detach();
-                    var p = $(elem_isc).detach();
-                    //
-                    const root_class
-                        = $(elem_stars).parent().parent().parent().parent().attr('class');
-                    if (stars.length >= min_group_count) {
-                        const twin_star = [stars[0], stars[stars.length-1]];
-                        this.add_stars(color, twin_star, root_class, json.uri);
-                        var children = $(elem_stars).children();
-                        $(children[children.length-1]).before(p);
-                        this.change_inner_star_count(elem_isc, stars.length - num_subset);
-                        //
-                    } else if (stars.length > 0) {
-                        this.add_stars(color, stars, root_class, json.uri);
-                    }
-                }
-            }
-        }
-        this.filtering_bookmark_stars(elem_stars);
     }
 
     /*!
@@ -870,6 +757,9 @@ class HatenaBookmarkFilter {
                         elem_inner_star[color] = elem[0];
                     }
                 });
+                const callback = ()=> {
+                    $(elem_e_star).attr("filtered", "");
+                };
                 if (!$.isEmptyObject(elem_inner_star)) {
                     // はてぶユーザ名と当たらなければなんでもOK
                     // (3文字以上の半角英数)
@@ -883,28 +773,76 @@ class HatenaBookmarkFilter {
                     this.filtering_bookmark_entry_starset(key_about,
                                                           anchor,
                                                           elem_stars,
-                                                          elem_inner_star);
+                                                          elem_inner_star,
+                                                          callback);
                 } else {
                     this.filtering_bookmark_stars(elem_stars);
+                    callback();
                 }
-                $(elem_e_star).attr("filtered", "");
             }
         }
     }
 
     /*!
-     *  @brief  ★フィルタ
-     *  @param  elem_stars  ★関連の根ノード(span.hatena-star-star-container)
-     *  @note   表示されている★にのみフィルタをかける(inner_countは無視)
+     *  @brief  自分が★付けたブコメにマーキングする
+     *  @param  elem_username   注目ブコメのusernameノード
+     *  @param  username        注目ブコメのオーサ名
+     *  @param  elem_stars      ★関連の根ノード(span.hatena-star-star-container)
      */
-    filtering_bookmark_stars(elem_stars)
+    marking_owned_star_comment(elem_username, username, elem_stars)
     {
-        elem_stars.find("a").each((inx, star)=> {
-            const staruser = this.cut_staruser_from_href($(star).attr("href"));
-            if (this.user_filter(staruser)) {
-                $(star).detach();
+        if (this.storage.json.mark_owned_star != null && !this.storage.json.mark_owned_star) {
+             return; // 追加機能なのでデフォルトONにして認知度を上げてみる
+        }
+        const login_user = this.get_login_username();
+        if (login_user == null || login_user == "") {
+            return; // 未ログイン
+        }
+        if (elem_stars == null) {
+            elem_stars = $(elem_username).parent().find("span.hatena-star-star-container");
+        }
+        var elem_button = $(elem_stars).find("img.hatena-star-add-button");
+        if ($(elem_button).attr("owned_marking") != null) {
+            return;
+        }
+        $(elem_button).attr("owned_marking", "");
+        //
+        if (username == null) {
+            username = $($(elem_username).find("a")[0]).text();
+        }
+        var find_login_user = ()=> {
+            var have_inner_star = false;
+            this.each_inner_count(elem_stars, (elem, color)=>{
+                if (elem.length > 0) {
+                    have_inner_star = true;
+                }
+            });
+            if (have_inner_star) {
+                const star_json = this.star_json[username];
+                if (star_json != null) {
+                    for (const color in star_json.stars) {
+                        const lst_stars = star_json.stars[color].list;
+                        for (const star of lst_stars) {
+                            if (star.name == login_user) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            } else {
+                const a_tag_stars = elem_stars.find("a");
+                for (const star of a_tag_stars) {
+                    const staruser = this.cut_staruser_from_href($(star).attr("href"));
+                    if (staruser == login_user) {
+                        return true;
+                    }
+                }
             }
-        });
+            return false;
+        };
+        if (find_login_user()) {
+            $(elem_button).css('border', '2px dotted red');
+        }
     }
 
     /*!
@@ -928,17 +866,165 @@ class HatenaBookmarkFilter {
                     elem_inner_star[color] = elem[0];
                 }
             });
+            const callback = ()=> {
+                $(parent).attr("filtered", "");
+            };
             if (!$.isEmptyObject(elem_inner_star)) {
                 // usernameは全部一緒なのでahchorをキーにする
                 const anchor = $(elem_username).find("a")[0].href;
                 this.filtering_bookmark_entry_starset(anchor,
                                                       anchor,
                                                       elem_stars,
-                                                      elem_inner_star);
+                                                      elem_inner_star,
+                                                      callback);
             } else {
                 this.filtering_bookmark_stars(elem_stars);
+                callback();
             }
-            $(parent).attr("filtered", "");
+        });
+    }
+
+
+    /*!
+     *  @brief  ★集合フィルタ
+     *  @param  username        注目ブコメのオーサ名
+     *  @param  anchor          APIキー
+     *  @param  elem_stars      ★関連の根ノード(span.hatena-star-star-container)
+     *  @param  elem_inner_star ★集合の数表示ノード(array)
+     *  @param  callback        フィルタ完了コールバック
+     *  @note   callback採用についてはfiltering_bookmark_star_star_containerに同じ
+     */
+    filtering_bookmark_entry_starset(username, anchor, elem_stars, elem_inner_star, callback)
+    {
+        const b_req = this.star_requested[username];
+        if (b_req != null) {
+            // 応答待ち
+            return;
+        }
+        this.star_requested[username] = true;
+        //
+        const api_url = 'http://s.hatena.com/entry.json?uri=' + encodeURIComponent(anchor);
+        $.ajax({
+            url: api_url,
+            type: 'GET',
+            dataType: 'json',
+            timeout: 1000,
+        }).done((data)=> {
+            if (data.entries.length == 0) {
+                callback();
+                return; // 正しく取得できなかった
+                        // URLによって記事★が取れないことがある。謎。
+            }
+            const b_active = this.storage.json.active;
+            const entry = data.entries[0];
+            var star_json = {
+                stars: [],
+                uri: entry.uri,
+            };
+            var filtering_star_json = (stars, color)=> {
+                var b_filtered = false;
+                var stars_buff = [];
+                for (const star of stars) {
+                    if (b_active && this.user_filter(star.name)) {
+                        b_filtered = true;
+                    } else {
+                        if (star.count != null) {
+                            for (var inx = 0; inx < star.count; inx++) {
+                                stars_buff.push({name: star.name,
+                                                 quote: star.quote});
+                            }
+                        } else {
+                            stars_buff.push(star);
+                        }
+                    }
+                }
+                star_json.stars[color] = {list: stars_buff.slice(),
+                                          filtered: b_filtered};
+            }
+            // normal star
+            filtering_star_json(entry.stars, 'yellow');
+            // color star
+            if (entry.colored_stars != null) {
+                for (const c_stars of entry.colored_stars) {
+                    filtering_star_json(c_stars.stars, c_stars.color);
+                }
+            }
+            this.star_json[username] = star_json;
+            this.filtering_bookmark_entry_starset_core(star_json,
+                                                        elem_stars,
+                                                        elem_inner_star);
+            callback();
+        }).fail((data, sub)=> {
+            callback();
+        });
+    }
+
+    /*!
+     *  @brief  ★集合フィルタ(core)
+     *  @param  star_json       1ブコメ/記事分の★情報(json)
+     *  @param  elem_stars      ★関連の根ノード(span.hatena-star-star-container)
+     *  @param  elem_inner_star ★集合の数表示ノード(array)
+     */
+    filtering_bookmark_entry_starset_core(star_json, elem_stars, elem_inner_star) {
+        if (!this.storage.json.active) {
+            return;
+        }
+        const min_set_count = 15;
+        const num_subset = 2;
+        const min_group_count = min_set_count + num_subset;
+        //
+        if (!$.isEmptyObject(star_json)) {
+            for (const color in elem_inner_star) {
+                const stars = star_json.stars[color];
+                if (stars != null && stars.filtered) {
+                    const lst_stars = stars.list;
+                    const len_stars = lst_stars.length;
+                    var elem_isc = elem_inner_star[color];
+                    var top_star = $(elem_isc).prev();
+                    var last_star = $(elem_isc).next();
+                    // inner_countとその前後の★を消す
+                    $(top_star).detach();
+                    $(last_star).detach();
+                    var p = $(elem_isc).detach();
+                    //
+                    const root_class
+                        = $(elem_stars).parent().parent().parent().parent().attr('class');
+                    if (len_stars >= min_group_count) {
+                        const twin_star = [lst_stars[0], lst_stars[len_stars-1]];
+                        this.add_stars(color, twin_star, root_class, star_json.uri);
+                        var children = $(elem_stars).children();
+                        $(children[children.length-1]).before(p);
+                        this.change_inner_star_count(elem_isc, len_stars-num_subset);
+                        //
+                    } else if (len_stars > 0) {
+                        this.add_stars(color, lst_stars, root_class, star_json.uri);
+                    }
+                }
+            }
+        }
+        this.filtering_bookmark_stars(elem_stars);
+    }
+
+    /*!
+     *  @brief  ★フィルタ
+     *  @param  elem_stars  ★関連の根ノード(span.hatena-star-star-container)
+     *  @note   表示されている★にのみフィルタをかける(inner_countは無視)
+     */
+    filtering_bookmark_stars(elem_stars) {
+        if (!this.storage.json.active) {
+            return;
+        }
+        var elem_button = $(elem_stars).find("img.hatena-star-add-button");
+        if ($(elem_button).attr("star_filtered") != null) {
+            return;
+        }
+        $(elem_button).attr("star_filtered", "");
+        //
+        elem_stars.find("a").each((inx, star)=> {
+            const staruser = this.cut_staruser_from_href($(star).attr("href"));
+            if (this.user_filter(staruser)) {
+                $(star).detach();
+            }
         });
     }
 
@@ -1123,12 +1209,41 @@ class HatenaBookmarkFilter {
         $(elem_inner_star).text(count);
     }
 
+    /*!
+     *  @brief  ログインuser名を得る
+     */
+    get_login_username() {
+        if (this.login_user == null) {
+            const elem = $("a.bookmark");
+            const len = elem.length;
+            if (len == 0) {
+                const elem_not_login = $("ul.gh-service-menu.is-guest.js-guest.is-hidden");
+                if (elem_not_login.length == 0) {
+                    this.login_user = "";
+                } else {
+                    return null; // まだ取得できない
+                }
+            } else {
+                for (var inx = 0; inx < len; inx++) {
+                    const label = $(elem[inx]).attr("data-gtm-label");
+                    const href = $(elem[inx]).attr("href");
+                    if (label != null && href != null) {
+                        if (label == "gh-bookmark") {
+                            this.login_user = href.split('/')[1];
+                        }
+                    }
+                }
+            }
+        }
+        return this.login_user;
+    }
+
 
     initialize() {
         //
         {
-            this.filtered_star_json = [];
-            this.requested_json = [];
+            this.star_json = [];
+            this.star_requested = [];
             this.star_color = { yellow: '',
                                 green : 'green',
                                 red   : 'red',
@@ -1149,7 +1264,9 @@ class HatenaBookmarkFilter {
                     this.filtering_bookmark_entry_about_star();
                     this.filtering_bookmark_entry_comment();
                 } else if (loc.in_user_bookmark_page()) {
-                    this.filtering_user_bookmark_star();
+                    if (this.storage.json.active) {
+                        this.filtering_user_bookmark_star();
+                    }
                 }
             });
             this.blog_observer = new MutationObserver((records)=> {

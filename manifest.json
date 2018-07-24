@@ -12,7 +12,7 @@
       "matches": [ "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*" ],
       "run_at": "document_start"
    } ],
-   "description": "はてなブックマークにフィルタ機能を追加するChrome拡張です。「ドメイン及びタイトル指定でのエントリ非表示」「サムネイル除去」が行えます。",
+   "description": "はてなブックマークにフィルタ機能を追加するChrome拡張です。「ドメイン及びタイトル指定でのエントリ非表示」「ID及びワード指定でのブックマークコメント非表示」「サムネイル除去」が行えます。",
    "icons": {
       "19": "img/badge_on.png",
       "48": "img/icon_48.png"
@@ -23,5 +23,5 @@
    "permissions": [ "tabs", "storage", "unlimitedStorage", "http://s.hatena.com/entry.json/*", "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*" ],
    "short_name": "Hatena Filter",
    "update_url": "https://clients2.google.com/service/update2/crx",
-   "version": "1.0.2.1"
+   "version": "1.0.3"
 }
