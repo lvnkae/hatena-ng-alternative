@@ -3,3 +3,5 @@
 https://anond.hatelabo.jp/20180702130545
 ‚Í‚Ä‚ÈNG‚Ì‘ã‘Ö•i for Firefox ‚Ì Android ‘Î‰ž
 https://anond.hatelabo.jp/20180711231152
+‚Í‚Ä‚ÈNG‚Ì‘ã‘Ö•i Chrome1.0.3/Firefox1.0.1 ‚ðŒöŠJ‚µ‚½
+https://anond.hatelabo.jp/20180725070806
