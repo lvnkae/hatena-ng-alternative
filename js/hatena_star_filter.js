@@ -336,7 +336,7 @@
             url: api_url,
             type: 'GET',
             dataType: 'json',
-            timeout: 1000,
+            timeout: 16000,
         }).done((data)=> {
             if (data.entries.length == 0) {
                 this.do_request_star_json_callback(username);
@@ -376,7 +376,7 @@
             this.star_json[username] = star_json;
             this.do_request_star_json_callback(username);
         }).fail((data, sub)=> {
-            //console.log('fail to api call(' + anchor + ')');
+            //console.log('fail to api call(' + anchor + ':' + sub + ')');
             this.do_request_star_json_callback(username);
         });
     }
