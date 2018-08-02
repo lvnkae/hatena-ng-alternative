@@ -1,8 +1,8 @@
 /*!
  *  @brief  はてな★フィルタクラス
  */
- class HatenaStarFilter
-{
+class HatenaStarFilter {
+
     /*!
      *  @brief  ブコメの★にフィルタをかける
      *  @param  username    注目ブコメのオーサ名
@@ -52,34 +52,14 @@
         const elem_e_star = $("span.js-entry-star");
         if (elem_e_star.length == 1) {
             var elem_stars = this.find_stars_root(elem_e_star);
-            //
-            if ($(elem_e_star).attr("filtered") != null) {
-                var elem_inner_star = [];
-                this.each_inner_count(elem_stars, (elem, color)=>{
-                    for (const e of elem) {
-                        elem_inner_star.push(e);
-                    }
-                });
-                if (elem_inner_star.length == 0 ||
-                    $(elem_inner_star).attr('tabindex') != null) {
-                    return; // 未展開またはinner_countが存在しなければ以降の処理は不要
-                }
-                for (var eis of elem_inner_star) {
-                    var head_star = $(eis).prev();
-                    const staruser = this.cut_staruser_from_href($(head_star).attr("href"));
-                    if (this.storage.user_filter(staruser)) {
-                        $(head_star).detach();
-                        $(eis).detach();
-                    }
-                }
+            if (this.is_filtered_node(elem_e_star)) {
                 this.filtering_added_stars(elem_stars);
-            } else {
-                if (!this.enable_stars_root(elem_stars)) {
-                    return;
-                }
-                const callback = ()=> {
-                    $(elem_e_star).attr("filtered", "");
-                };
+                return;
+            }
+            if (!this.enable_stars_root(elem_stars)) {
+                return;
+            }
+            ((callback)=>{
                 const elem_inner_star = this.get_elem_inner_star(elem_stars);
                 if (!$.isEmptyObject(elem_inner_star)) {
                     // はてぶユーザ名と当たらなければなんでもOK
@@ -92,15 +72,17 @@
                                          .parent()
                                          .find("a.js-entry-link.is-hidden")[0]).attr("href");
                     this.filtering_bookmark_entry_starset(key_about,
-                                                          anchor,
-                                                          elem_stars,
-                                                          elem_inner_star,
-                                                          callback);
+                                                            anchor,
+                                                            elem_stars,
+                                                            elem_inner_star,
+                                                            callback);
                 } else {
                     this.filtering_added_stars(elem_stars);
                     callback();
                 }
-            }
+            })(()=>{
+                this.filtered_node(elem_e_star);
+            });
         }
     }
 
@@ -111,37 +93,38 @@
         $("span.centerarticle-reaction-username").each((inx, elem_username)=> {
             const parent = $(elem_username).parent();
             const elem_stars = this.find_stars_root(parent);
-            if ($(parent).attr("filtered") != null) {
+            if (this.is_filtered_node(parent)) {
                 this.filtering_added_stars(elem_stars);
                 return;
             }
             if (!this.enable_stars_root(elem_stars)) {
                 return;
             }
-            const callback = ()=> {
-                $(parent).attr("filtered", "");
-            };
-            const elem_inner_star = this.get_elem_inner_star(elem_stars);
-            if (!$.isEmptyObject(elem_inner_star)) {
-                // usernameは全部一緒なのでahchorをキーにする
-                const anchor = $(elem_username).find("a")[0].href;
-                const json = this.star_json[anchor];
-                if (json != null) {
-                    this.filtering_bookmark_entry_starset_core(json,
-                                                               elem_stars,
-                                                               elem_inner_star);
-                    callback();
+            ((callback)=> {
+                const elem_inner_star = this.get_elem_inner_star(elem_stars);
+                if (!$.isEmptyObject(elem_inner_star)) {
+                    // usernameは全部一緒なのでahchorをキーにする
+                    const anchor = $(elem_username).find("a")[0].href;
+                    const json = this.star_json[anchor];
+                    if (json != null) {
+                        this.filtering_bookmark_entry_starset_core(json,
+                                                                   elem_stars,
+                                                                   elem_inner_star);
+                        callback();
+                    } else {
+                        this.filtering_bookmark_entry_starset(anchor,
+                                                              anchor,
+                                                              elem_stars,
+                                                              elem_inner_star,
+                                                              callback);
+                    }
                 } else {
-                    this.filtering_bookmark_entry_starset(anchor,
-                                                          anchor,
-                                                          elem_stars,
-                                                          elem_inner_star,
-                                                          callback);
+                    this.filtering_added_stars(elem_stars);
+                    callback();
                 }
-            } else {
-                this.filtering_added_stars(elem_stars);
-                callback();
-            }
+            })(()=> {
+                this.filtered_node(parent);
+            });
         });
     }
 
@@ -275,6 +258,7 @@
                 }
             }
         }
+        return false;
     }
 
     /*!
@@ -386,7 +370,7 @@
      *  @param  elem_stars  ★関連の根ノード(span.hatena-star-star-container)
      *  @return 既に持っていればそれを、なければ新規に割り振ったものを返す
      *  @note   同一ノードによる複数回のリクエストを回避するための識別子
-     *  @note   ノードそのものを簡単に区別する方法がないのでIDを付ける
+     *  @note   ノードそのものを簡単に区別する方法がないのでIDを割り振る
      */
     assign_star_json_id(elem_stars) {
         var id = $(elem_stars).attr("jid");
@@ -421,7 +405,7 @@
      *  @param  elem_stars      ★関連の根ノード(span.hatena-star-star-container)
      *  @param  elem_inner_star ★集合の数表示ノード(array)
      *  @param  callback        フィルタ完了コールバック
-     *  @note   APIコールとフィルタ主処理への接続
+     *  @note   APIコールとフィルタcoreへの接続
      */
     filtering_bookmark_entry_starset(username, anchor, elem_stars, elem_inner_star, callback) {
         const fbes_cb = ()=> {
@@ -514,6 +498,17 @@
         elem_stars.find("a").each((inx, star)=> {
             const staruser = this.cut_staruser_from_href($(star).attr("href"));
             if (this.storage.user_filter(staruser)) {
+                var next = $(star).next();
+                if (next != null) {
+                    const nclass = $(next).attr('class');
+                    if (nclass != null && nclass.indexOf('hatena-star-inner-count') >= 0) {
+                        // ★300個以上のinner_starを展開すると、複数個★付けたユーザはまとめ表示される
+                        // tabindexがあるinner_starは展開前、ないのはまとめ表示
+                        if ($(next).attr('tabindex') == null) {
+                            $(next).detach();
+                        }
+                    }
+                }
                 $(star).detach();
             }
         });
@@ -580,21 +575,15 @@
         return eis_tag;
     }
 
-    each_inner_count(elem_stars, func) {
-        for (const sc_key in this.star_color) {
-            const eis_tag = this.get_inner_count_tag(sc_key);
-            const elem = $(elem_stars).find(eis_tag);
-            func(elem, sc_key);
-        }
-    }
-
     get_elem_inner_star(elem_stars) {
         var elem_inner_star = [];
-        this.each_inner_count(elem_stars, (elem, color)=> {
+        for (const color in this.star_color) {
+            const eis_tag = this.get_inner_count_tag(color);
+            const elem = $(elem_stars).find(eis_tag);
             if (elem.length == 1) {
                 elem_inner_star[color] = elem[0];
             }
-        });
+        }
         return elem_inner_star;
     }
 
