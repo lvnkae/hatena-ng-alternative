@@ -35,7 +35,7 @@ class StorageData {
         this.json = {}
         this.json.active = true;        // フィルタ 有効/無効
         this.json.ng_thumbnail = false; // サムネイル除去 有効/無効
-        this.mark_owned_star = true;    // ★付けたブコメ強調表示 有効/無効
+        this.json.mark_owned_star=true; // ★付けたブコメ強調表示 有効/無効
         this.json.ng_domain = [];       // ドメインフィルタ
         this.json.ng_title = [];        // タイトルフィルタ
         this.json.ng_user = [];         // ユーザフィルタ
@@ -69,5 +69,87 @@ class StorageData {
                 this.ng_comment_text += ngc + nlc;
             }
         }
+    }
+
+    /*!
+     *  @brief  ドメインフィルタ
+     *  @param  href    URL
+     *  @param  title   タイトル
+     *  @note   大文字/小文字区別なし
+     */
+    domain_filter(href, title) {
+        const href_l = href.toLowerCase();
+        for (const ngd of this.json.ng_domain) {
+            if (href_l.indexOf(ngd.keyword.toLowerCase()) >= 0) {
+                if (function(href, sub_dirs) {
+                    if (sub_dirs.length == 0) {
+                        return true;
+                    }
+                    for (const subdir of sub_dirs) {
+                        if (href.indexOf(subdir) >= 0) {
+                            return true;
+                        }
+                    }
+                } (href_l, ngd.sub_dirs)) {
+                    if (function(title, black_titles) {
+                        if (black_titles.length == 0) {
+                            return true;
+                        }
+                        for (const btitle of black_titles) {
+                            if (text_utility.regexp_indexOf(btitle, title)) {
+                                return true;
+                            }
+                        }
+                    } (title, ngd.black_titles)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /*!
+     *  @brief  タイトルフィルタ
+     *  @param  title   タイトル
+     */
+    title_filter(title) {
+        for (const ngt of this.json.ng_title) {
+            if (text_utility.regexp_indexOf(ngt, title)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /*!
+     *  @brief  ユーザ名フィルタ
+     *  @param  user    ユーザ名
+     *  @note   完全一致
+     */
+    user_filter(user) {
+        if (this.json.ng_user != null) {
+            for (const ngu of this.json.ng_user) {
+                if (user == ngu) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /*!
+     *  @brief  コメントフィルタ
+     *  @param  comment コメントテキスト
+     */
+    comment_filter(comment) {
+        if (this.json.ng_comment != null) {
+            for (const ngc of this.json.ng_comment) {
+                if (text_utility.regexp_indexOf(ngc, comment)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

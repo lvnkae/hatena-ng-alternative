@@ -8,7 +8,7 @@
       "name": "Hatena Filter"
    },
    "content_scripts": [ {
-      "js": [ "js/jquery-3.3.1.min.js", "js/text_utility.js", "js/storage_data.js", "js/content.js" ],
+      "js": [ "js/jquery-3.3.1.min.js", "js/text_utility.js", "js/storage_data.js", "js/fixed_url_filter.js", "js/hatena_star_filter.js", "js/hatena_bookmark_filter.js",  "js/content.js" ],
       "matches": [ "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*" ],
       "run_at": "document_start"
    } ],
