@@ -125,6 +125,10 @@ class HatenaBookmarkFilter {
                     // → timerで根っこのelement(.container)構築を待つ
                     //    以降はobserverでelement追加をhookして除去実行
                     var container = document.getElementById("container");
+                    if (container == null) {
+                        // mobile対応
+                        container = document.getElementsByClassName("touch-container")[0];
+                    }
                     if (container != null) {
                         this.container_observer.observe(container, {
                           childList: true,
@@ -164,7 +168,7 @@ class HatenaBookmarkFilter {
                     if (loc.in_hatena_bookmark()) {
                         if (loc.in_user_bookmark_page()) {
                             // ブコメ
-                            elem_comment.push($("ul.js-user-bookmark-item-list.js-keyboard-controllable-container")[0]);
+                            elem_comment.push(this.get_user_bookmerk_item_list_node());
                         } else if (loc.in_entry_page()) {
                             // ブコメ
                             elem_comment.push($("div.js-bookmarks-sort-panels")[0]);
@@ -236,7 +240,7 @@ class HatenaBookmarkFilter {
                         var elem_marking = [];
                         if (loc.in_user_bookmark_page()) {
                             // ブコメ
-                            elem_marking.push($("ul.js-user-bookmark-item-list.js-keyboard-controllable-container")[0]);
+                            elem_marking.push(this.get_user_bookmerk_item_list_node());
                         } else if (loc.in_entry_page()) {
                             // ブコメ
                             elem_marking.push($("div.js-bookmarks-sort-panels")[0]);
@@ -255,6 +259,19 @@ class HatenaBookmarkFilter {
                 }
             });
         });
+    }
+
+    /*!
+     *  @brief  ユーザブックマークページのブコメリスト根ノードを得る
+     *  @note   PCとmobileで名前が異なるのでラップしただけ
+     */
+    get_user_bookmerk_item_list_node() {
+        const for_pc_browser = $("ul.js-user-bookmark-item-list")[0];
+        if (for_pc_browser != null) {
+            return for_pc_browser;
+        } else {
+            return $("ul.touch-articles.js-user-bookmark-item-list")[0];
+        }
     }
 
     /*!
