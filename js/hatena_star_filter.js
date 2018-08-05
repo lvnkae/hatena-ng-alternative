@@ -237,7 +237,7 @@ class HatenaStarFilter {
     exist_login_user_added_stars(elem_stars, login_user) {
         const stars = elem_stars.find("a");
         for (const star of stars) {
-            const staruser = $($(star).find("img")[0]).attr("alt");
+            const staruser = this.get_staruser(star);
             if (staruser == login_user) {
                 return true;
             }
@@ -496,7 +496,7 @@ class HatenaStarFilter {
         this.filtered_node(elem_button);
         //
         elem_stars.find("a").each((inx, star)=> {
-            const staruser = $($(star).find("img")[0]).attr("alt");
+            const staruser = this.get_staruser(star);
             if (this.storage.user_filter(staruser)) {
                 var next = $(star).next();
                 if (next != null) {
@@ -520,6 +520,15 @@ class HatenaStarFilter {
     filtering_child_added_stars(parent) {
         this.filtering_added_stars(this.find_stars_root(parent));
     }
+
+    /*!
+     *  @brief  ★ノードから"送ったuser名"を得る
+     *  @param  star    ★ノード(<a>タグ)
+     */
+    get_staruser(star) {
+        return $($(star).find("img")[0]).attr("alt").split(" (")[0];
+    }
+
 
     /*!
      *  @brief  entryに★をN個追加する
