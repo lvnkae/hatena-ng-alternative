@@ -142,6 +142,11 @@ class HatenaBookmarkFilter {
             // DOM構築完了時の処理
             document.addEventListener("DOMContentLoaded", ()=> {
                 const loc = this.current_location;
+                // observerによるサムネイル除去が行われないことがあるのでこのタイミングでも一発叩いておく
+                // (mobile版ではcontainerノード発見が遅すぎてはelement追加し終えてることがある)
+                if (ldata.ng_thumbnail) {
+                    this.filtering_thumbnail();
+                }
                 //
                 if (ldata.active) {
                     this.filtering_bookmark();
