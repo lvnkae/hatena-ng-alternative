@@ -9,7 +9,7 @@
    },
    "content_scripts": [ {
       "js": [ "js/jquery-3.3.1.min.js", "js/text_utility.js", "js/storage_data.js", "js/fixed_url_filter.js", "js/hatena_star_filter.js", "js/hatena_bookmark_filter.js",  "js/content.js" ],
-      "matches": [ "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*" ],
+      "matches": [ "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*", "https://www.hatena.ne.jp/*", "https://b.hatena.ne.jp/*" ],
       "run_at": "document_start"
    } ],
    "description": "はてなブックマークにフィルタ機能を追加するChrome拡張です。「ドメイン及びタイトル指定でのエントリ非表示」「ID及びワード指定でのブックマークコメント非表示」「スターを付けたコメントの強調表示」「サムネイル除去」が行えます。",
@@ -20,8 +20,8 @@
    "manifest_version": 2,
    "name": "はてなフィルタ",
    "author": "lvnkae",
-   "permissions": [ "tabs", "storage", "unlimitedStorage", "http://s.hatena.com/entry.json/*", "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*" ],
+   "permissions": [ "tabs", "storage", "unlimitedStorage", "http://s.hatena.com/entry.json/*", "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*", "https://www.hatena.ne.jp/*", "https://b.hatena.ne.jp/*" ],
    "short_name": "Hatena Filter",
    "update_url": "https://clients2.google.com/service/update2/crx",
-   "version": "1.0.3.2"
+   "version": "1.0.3.3"
 }

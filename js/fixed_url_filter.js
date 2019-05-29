@@ -47,8 +47,10 @@ class fixedURLFilter {
         const fixed_ng_url_keywords = [
             //
             'alfalfalfa.com',
+            'anonymous-post.mobi',
             'blog.esuteru.com',
             'blog.livedoor.jp',
+            'exawarosu.net',
             'hamusoku.com',
             'himasoku.com',
             'hosyusokuhou.jp',
@@ -56,11 +58,22 @@ class fixedURLFilter {
             'jin115.com',
             'kabumatome.doorblog.jp',
             'kijosoku.com',
+            'matomedane.jp',
             'michaelsan.livedoor.biz',
             'news4vip.livedoor.biz',
+            'oboega-01.blog.jp',
             'oryouri.2chblog.jp',
             'yaraon-blog.com',
             //
+            'ameblo.jp',
+            'aiulog.com',
+            'blog.goo.ne.jp',
+            'entert.jyuusya-yoshiko.com',
+            'impressionsnote.com',
+            'new-smart.info',
+            //
+            'dng65.com',
+            'kaikore.blogspot.com',
             'kaigainohannoublog.blog55.fc2.com',
             'sow.blog.jp',
             'all-nationz.com',
@@ -103,12 +116,19 @@ class fixedURLFilter {
             'bluejay01-review',
             'chihhylove',
             'dqnplus',
+            'drazuli',
             'goldennews',
             'insidears',
             'itsoku',
             'kinisoku',
             'news23vip',
             'nwknews',
+        ];
+        fixed_ng_url_subdirs['blog.goo.ne.jp'] = [
+            'kimito39',
+        ];
+        fixed_ng_url_subdirs['ameblo.jp'] = [
+            'kimito3923',
         ];
         for (const keyword of fixed_ng_url_keywords) {
             var ng_url = {};
