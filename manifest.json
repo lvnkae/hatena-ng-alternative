@@ -9,7 +9,7 @@
    },
    "content_scripts": [ {
       "js": [ "js/jquery-3.3.1.min.js", "js/text_utility.js", "js/storage_data.js", "js/fixed_url_filter.js", "js/hatena_star_filter.js", "js/hatena_bookmark_filter.js", "js/content.js" ],
-      "matches": [ "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*" ],
+      "matches": [ "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*", "https://www.hatena.ne.jp/*", "https://b.hatena.ne.jp/*" ],
       "run_at": "document_start"
    } ],
    "description": "はてなブックマークにフィルタ機能を追加するアドオンです。「ドメイン及びタイトル指定でのエントリ非表示」「サムネイル除去」「ID及びワード指定でのブックマークコメント非表示」が行えます。",
@@ -24,7 +24,7 @@
     },
    "manifest_version": 2,
    "name": "はてなフィルタ",
-   "permissions": [ "storage", "http://s.hatena.com/entry.json/*", "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*" ],
+   "permissions": [ "storage", "http://s.hatena.com/entry.json/*", "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*", "https://www.hatena.ne.jp/*", "https://b.hatena.ne.jp/*" ],
    "short_name": "HatenaFilter",
-   "version": "1.0.1.3"
+   "version": "1.0.1.4"
 }
