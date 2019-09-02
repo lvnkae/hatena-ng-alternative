@@ -1,4 +1,8 @@
 {
+   "background": {
+      "persistent": false,
+      "scripts": [ "js/background.js" ]
+   },
    "browser_action": {
       "default_icon": {
          "19": "img/badge_on.png"
@@ -20,8 +24,8 @@
    "manifest_version": 2,
    "name": "はてなフィルタ",
    "author": "lvnkae",
-   "permissions": [ "tabs", "storage", "unlimitedStorage", "http://s.hatena.com/entry.json/*", "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*", "https://www.hatena.ne.jp/*", "https://b.hatena.ne.jp/*" ],
+   "permissions": [ "tabs", "storage", "unlimitedStorage", "http://s.hatena.com/entry.json/*", "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*", "https://s.hatena.com/*", "https://www.hatena.ne.jp/*", "https://b.hatena.ne.jp/*" ],
    "short_name": "Hatena Filter",
    "update_url": "https://clients2.google.com/service/update2/crx",
-   "version": "1.0.3.3"
+   "version": "1.0.3.5"
 }

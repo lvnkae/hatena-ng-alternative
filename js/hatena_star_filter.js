@@ -314,56 +314,64 @@ class HatenaStarFilter {
             this.request_star_json_callback[username] = cblist;
             //console.log("req(" + username + ", " + callback.name + ", " + star_json_id + ")");
         }
-        //
-        const api_url = 'http://s.hatena.com/entry.json?uri=' + encodeURIComponent(anchor);
-        $.ajax({
-            url: api_url,
-            type: 'GET',
-            dataType: 'json',
-            timeout: 16000,
-        }).done((data)=> {
-            if (data.entries.length == 0) {
-                this.do_request_star_json_callback(username);
-                //console.log('api error(' + anchor + ')');
-                return; // 正しく取得できなかった
-                        // URLによって記事★が取れないことがある。謎。
-            }
-            const entry = data.entries[0];
-            var star_json = {
-                stars: [],
-                uri: entry.uri,
-                filtered: false,
-            };
-            var filtering_star_json = (stars, color)=> {
-                var stars_buff = [];
-                for (const star of stars) {
-                    if (star.count != null) {
-                        for (var inx = 0; inx < star.count; inx++) {
-                            stars_buff.push({name: star.name,
-                                             quote: star.quote});
-                        }
-                    } else {
-                        stars_buff.push(star);
-                    }
-                }
-                star_json.stars[color] = {list: stars_buff.slice(),
-                                          filtered: false};
-            }
-            // normal star
-            filtering_star_json(entry.stars, 'yellow');
-            // color star
-            if (entry.colored_stars != null) {
-                for (const c_stars of entry.colored_stars) {
-                    filtering_star_json(c_stars.stars, c_stars.color);
-                }
-            }
-            this.star_json[username] = star_json;
-            this.do_request_star_json_callback(username);
-        }).fail((data, sub)=> {
-            //console.log('fail to api call(' + anchor + ':' + sub + ')');
-            this.do_request_star_json_callback(username);
-        });
+
+        // bgにhatenaAPIコールを委託
+        chrome.runtime.sendMessage(
+            {command:"hatenaAPI_entry", anchor: anchor, username: username}, ()=>{});
+
     }
+
+    /*!
+     *  @brief  hatenaAPI(entry.json)コール要求応答処理
+     *  @note   ここ(content-script)でhatenaAPIを叩いてもCORBされる
+     *  @note   bgでは許されるので委託し、その結果をここで処理する
+     */
+    reply_hatenaAPI_entry(message) {
+        const username = message.username;
+        if (message.result == 'timeout' || message.result == 'fail') {
+            this.do_request_star_json_callback(username);
+            //console.log('api error(' + anchor + ')');
+            //console.log('fail to api call(' + anchor + ':' + sub + ')');
+            return;
+        }
+        if (message.text == '') {
+            return; // 正しく取得できなかった
+                    // URLによって記事★が取れないことがある。謎。
+        }
+        const data = JSON.parse(message.text);
+        const entry = data.entries[0];
+        var star_json = {
+            stars: [],
+            uri: entry.uri,
+            filtered: false,
+        };
+        var filtering_star_json = (stars, color)=> {
+            var stars_buff = [];
+            for (const star of stars) {
+                if (star.count != null) {
+                    for (var inx = 0; inx < star.count; inx++) {
+                        stars_buff.push({name: star.name,
+                                            quote: star.quote});
+                    }
+                } else {
+                    stars_buff.push(star);
+                }
+            }
+            star_json.stars[color] = {list: stars_buff.slice(),
+                                        filtered: false};
+        }
+        // normal star
+        filtering_star_json(entry.stars, 'yellow');
+        // color star
+        if (entry.colored_stars != null) {
+            for (const c_stars of entry.colored_stars) {
+                filtering_star_json(c_stars.stars, c_stars.color);
+            }
+        }
+        this.star_json[username] = star_json;
+        this.do_request_star_json_callback(username);
+    }
+
 
     /*!
      *  @brief  star_jsonIDを割り振る
@@ -657,5 +665,14 @@ class HatenaStarFilter {
                             red   : 'red',
                             blue  : 'blue',
                             purple: 'purple' };
+        // background用Listener
+        chrome.runtime.onMessage.addListener(
+            (request, sender, sendResponce)=> {
+                if (request.command == "hatenaAPI_entry") {
+                    this.reply_hatenaAPI_entry(request);
+                }
+                return true;
+            }
+        );
     }
 }
