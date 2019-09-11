@@ -46,18 +46,23 @@ class fixedURLFilter {
 
         const fixed_ng_url_keywords = [
             //
+            '3ten5jigen.officialblog.jp',
             'alfalfalfa.com',
             'anonymous-post.mobi',
+            'bimatome.weblog.to',
             'blog.esuteru.com',
             'blog.livedoor.jp',
             'exawarosu.net',
+            'galapgs.com',
             'hamusoku.com',
             'himasoku.com',
             'hosyusokuhou.jp',
             'i2chmeijin.blog.fc2.com',
             'jin115.com',
             'kabumatome.doorblog.jp',
+            'kawaiisokuhou.com',
             'kijosoku.com',
+            'machipatome.publog.jp',
             'matomedane.jp',
             'michaelsan.livedoor.biz',
             'news4vip.livedoor.biz',
@@ -88,6 +93,11 @@ class fixedURLFilter {
             'gamewith.jp',
             //
             'agora-web.jp',
+            //
+            'blog.amazingtalker.com',
+            'sorasapo.com',
+            'zakkan-vivi.com',
+            //            
             'buzzap.jp',
             'buzz-plus.com',
             'buzznews.jp',
@@ -124,6 +134,7 @@ class fixedURLFilter {
             'goldennews',
             'insidears',
             'itsoku',
+            'kaikaihanno',
             'kinisoku',
             'news23vip',
             'nwknews',
