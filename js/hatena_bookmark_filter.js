@@ -105,7 +105,6 @@ class HatenaBookmarkFilter {
         this.container_observer = null;
         this.bookmark_observer = null;
         this.comment_observer = null;
-        this.blog_observer = null;
         this.marking_observer = null;
     }
 
@@ -162,14 +161,10 @@ class HatenaBookmarkFilter {
                             this.star_filter.filtering_user_bookmark_comment_stars();
                         }
                     });
-                    this.blog_observer = new MutationObserver((records)=> {
-                        this.filtering_bookmark_entry_blog();
-                    });
                     // DOM構築完了後に追加される遅延elementもフィルタにかけたい
                     // → observerでelement追加をhookしfiltering実行
                     var elem_bookmark = [];
                     var elem_comment = [];
-                    var elem_blog = [];
                     if (loc.in_hatena_bookmark()) {
                         if (loc.in_user_bookmark_page()) {
                             // ブコメ
@@ -181,8 +176,6 @@ class HatenaBookmarkFilter {
                             elem_comment.push($("section.entry-about.js-entry-about")[0]);
                             // ブックマークしたすべてのユーザー
                             elem_comment.push($("div.entry-usersModal.js-all-bookmarkers-modal.is-hidden")[0]);
-                            // ブログでの反応
-                            elem_blog.push($("ul.entry-blogOpinion-list.js-entry-blogOpinion-list-all")[0]);
                             // エントリページの「関連記事」
                             elem_bookmark.push($("section.entry-relationContents")[0]);
                         } else if (loc.in_top_page()) {
@@ -208,26 +201,22 @@ class HatenaBookmarkFilter {
                     }
                     //
                     for (var e of elem_bookmark) {
-                        this.bookmark_observer.observe(e, {
-                            childList: true,
-                            subtree: true,
-                        });
-                    }
-                    if ((ldata.ng_user != null && ldata.ng_user.length > 0) ||
-                        (ldata.ng_comment != null && ldata.ng_comment.length > 0)) {
-                        for (var e of elem_comment) {
-                            this.comment_observer.observe(e, {
+                        if (e != null) {
+                            this.bookmark_observer.observe(e, {
                                 childList: true,
                                 subtree: true,
                             });
                         }
                     }
-                    if (ldata.ng_user != null && ldata.ng_user.length > 0) {
-                        for (var e of elem_blog) {
-                            this.blog_observer.observe(e, {
-                                childList: true,
-                                subtree: true,
-                            });
+                    if ((ldata.ng_user != null && ldata.ng_user.length > 0) ||
+                        (ldata.ng_comment != null && ldata.ng_comment.length > 0)) {
+                        for (var e of elem_comment) {
+                            if (e != null) {
+                                this.comment_observer.observe(e, {
+                                    childList: true,
+                                    subtree: true,
+                                });
+                            }
                         }
                     }
                 }
@@ -255,10 +244,12 @@ class HatenaBookmarkFilter {
                             elem_marking.push($("div.entry-usersModal.js-all-bookmarkers-modal.is-hidden")[0]);
                         }
                         for (var e of elem_marking) {
-                            this.marking_observer.observe(e, {
-                                childList: true,
-                                subtree: true,
-                            });
+                            if (e != null) {
+                                this.marking_observer.observe(e, {
+                                    childList: true,
+                                    subtree: true,
+                                });
+                            }
                         }
                     }
                 }
@@ -602,23 +593,6 @@ class HatenaBookmarkFilter {
         return false;
     }
 
-
-    /*!
-     *  @brief  エントリページの「ブログでの反応」にフィルタをかける
-     */ 
-    filtering_bookmark_entry_blog()
-    {
-        $("span.entry-blogOpinion-username").each((inx, elem_username)=> {
-            const a_tag = $(elem_username).find("a");
-            if (a_tag.length != 1) {
-                return;
-            }
-            const username = this.cut_username_from_id($(a_tag[0]).text());
-            if (this.storage.user_filter(username)) {
-                $(elem_username).parent().parent().detach();
-            }
-        });
-    }
 
     /*!
      *  @brief  エントリページの「ブックマークしたユーザー」にフィルタをかける

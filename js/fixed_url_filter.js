@@ -68,6 +68,7 @@ class fixedURLFilter {
             'news4vip.livedoor.biz',
             'oboega-01.blog.jp',
             'oryouri.2chblog.jp',
+            'tsuisoku.com',
             'yaraon-blog.com',
             //
             'ameblo.jp',
@@ -77,11 +78,14 @@ class fixedURLFilter {
             'impressionsnote.com',
             'new-smart.info',
             //
-            'dng65.com',
-            'kaikore.blogspot.com',
-            'kaigainohannoublog.blog55.fc2.com',
-            'sow.blog.jp',
             'all-nationz.com',
+            'caramelbuzz.com',
+            'chinesestyle.seesaa.net',
+            'chouyakuc.blog134.fc2.com',
+            'dng65.com',
+            'kaigainohannoublog.blog55.fc2.com',
+            'kaikore.blogspot.com',
+            'sow.blog.jp',
             //
             'altema.jp',
             'game8.jp',
