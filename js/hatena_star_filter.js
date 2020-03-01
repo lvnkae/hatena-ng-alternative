@@ -12,7 +12,7 @@ class HatenaStarFilter {
         //  Promise返すようにしたら負荷が跳ね上がったのでcallback式で妥協
         //  ブクマ数+inner_star数(多い時は1000over)分のPromiseが同時生成されるので重い
         ((callback)=>{
-            const elem_stars = this.find_stars_root(parent);
+            const elem_stars = HatenaDOMUtil.find_stars_root(parent);
             if (!this.enable_stars_root(elem_stars)) {
                 return; // まだフィルタかけられない
             }
@@ -51,7 +51,7 @@ class HatenaStarFilter {
     filtering_bookmark_entry_about_star() {
         const elem_e_star = $("span.js-entry-star");
         if (elem_e_star.length == 1) {
-            var elem_stars = this.find_stars_root(elem_e_star);
+            var elem_stars = HatenaDOMUtil.find_stars_root(elem_e_star);
             if (this.is_filtered_node(elem_e_star)) {
                 this.filtering_added_stars(elem_stars);
                 return;
@@ -91,8 +91,8 @@ class HatenaStarFilter {
      */
     filtering_user_bookmark_comment_stars() {
         $("span.centerarticle-reaction-username").each((inx, elem_username)=> {
-            const parent = $(elem_username).parent();
-            const elem_stars = this.find_stars_root(parent);
+            const parent = HatenaDOMUtil.find_usrcomment_root(elem_username);
+            const elem_stars = HatenaDOMUtil.find_stars_root(parent);
             if (this.is_filtered_node(parent)) {
                 this.filtering_added_stars(elem_stars);
                 return;
@@ -137,9 +137,9 @@ class HatenaStarFilter {
             return; // 未ログイン
         }
         $("span.entry-comment-username").each((inx, elem_username)=> {
-            const parent = $(elem_username).parent();
+            const parent = HatenaDOMUtil.find_comment_root(elem_username);
             const username = $($(elem_username).find("a")[0]).text();
-            const elem_stars = this.find_stars_root(parent);
+            const elem_stars = HatenaDOMUtil.find_stars_root(parent);
             if (!this.enable_stars_root(elem_stars)) {
                 return;
             }
@@ -188,7 +188,8 @@ class HatenaStarFilter {
             return;
         }
         $("span.centerarticle-reaction-username").each((inx, elem_username)=> {
-            const elem_stars = this.find_stars_root($(elem_username).parent());
+            const parent = HatenaDOMUtil.find_usrcomment_root(elem_username);
+            const elem_stars = HatenaDOMUtil.find_stars_root(parent);
             if (!this.enable_stars_root(elem_stars)) {
                 return;
             }
@@ -411,25 +412,7 @@ class HatenaStarFilter {
         const fbes_cb = ()=> {
             var get_json = this.star_json[username];
             if (get_json != null) {
-                if (!get_json.filtered) {
-                    for (const color in get_json.stars) {
-                        const stars = get_json.stars[color];
-                        var filtered_stars = [];
-                        var b_filtered = false;
-                        for (var star of stars.list) {
-                            if (this.storage.user_filter(star.name)) {
-                                b_filtered = true;
-                            } else {
-                                filtered_stars.push(star);
-                            }
-                        }
-                        if (b_filtered) {
-                            stars.list = filtered_stars.slice();
-                            stars.filtered = true;
-                        }
-                    }
-                    get_json.filtered = true;
-                }
+                this.filtering_star_json(get_json);
                 this.filtering_bookmark_entry_starset_core(get_json,
                                                            elem_stars,
                                                            elem_inner_star);
@@ -455,7 +438,7 @@ class HatenaStarFilter {
             for (const color in elem_inner_star) {
                 const stars = star_json.stars[color];
                 if (stars != null && stars.filtered) {
-                    const lst_stars = stars.list;
+                    const lst_stars = stars.filtered_list;
                     const len_stars = lst_stars.length;
                     var elem_isc = elem_inner_star[color];
                     var top_star = $(elem_isc).prev();
@@ -518,7 +501,7 @@ class HatenaStarFilter {
      *  @param  parent  ★関連の根ノードを子に持つなんかノード
      */
     filtering_child_added_stars(parent) {
-        this.filtering_added_stars(this.find_stars_root(parent));
+        this.filtering_added_stars(HatenaDOMUtil.find_stars_root(parent));
     }
 
     /*!
@@ -527,6 +510,35 @@ class HatenaStarFilter {
      */
     get_staruser(star) {
         return $($(star).find("img")[0]).attr("alt").split(" (")[0];
+    }
+
+    /*!
+     *  @brief  ★集合jsonのフィルタリング
+     *  @param  star_json   ★集合json
+     */
+    filtering_star_json(star_json) {
+        if (!star_json.filtered) {
+            for (const color in star_json.stars) {
+                var stars = star_json.stars[color];
+                var filtered_stars = [];
+                var b_filtered = false;
+                for (const star of stars.list) {
+                    if (this.storage.user_filter(star.name)) {
+                        b_filtered = true;
+                    } else {
+                        filtered_stars.push(star);
+                    }
+                }
+                if (b_filtered) {
+                    stars.filtered_list = filtered_stars.slice();
+                    stars.filtered = true;
+                } else {
+                    stars.filtered_list = [];
+                    stars.filtered = false;
+                }
+            }
+            star_json.filtered = true;
+        }
     }
 
 
@@ -602,12 +614,16 @@ class HatenaStarFilter {
     }
 
     /*!
-     *  @brief  ★関連の根ノードを探して返す
-     *  @param  node    キーノード
+     *  @brief  取得済み★集合jsonにフィルタをかけなおす
      */
-    find_stars_root(node) {
-        return $(node).find("span.hatena-star-star-container");
+    filtering_star_json_cache() {
+        for (const key in this.star_json) {
+            var get_json = this.star_json[key];
+            get_json.filtered = false;
+            this.filtering_star_json(get_json);
+        }
     }
+
     /*!
      *  @brief  ★関連の根ノードが有効か
      */
