@@ -1,262 +1,196 @@
 /*!
- *  @brief  urlを扱いやすくしたもの
- */
-class urlWrapper {
-
-    constructor(url) {
-        const href_header = [
-            'http://',
-            'https://'
-        ];
-        this.url = (function() {
-            for (const headar of href_header) {
-                if (url.substr(0, headar.length) == headar) {
-                    return url;
-                }
-            }
-            return "https://" + url;
-        })();
-        var href_div = (()=> {
-            for (const headar of href_header) {
-                if (this.url.substr(0, headar.length) == headar) {
-                    return this.url.substr(headar.length).split('/');
-                }
-            }
-            return [];
-        })();
-        if (href_div.length > 0) {
-            this.domain = href_div[0];
-        } else {
-            this.domain = '';
-        }
-        this.subdir = [];
-        if (href_div.length > 1) {
-            for (var i = 1; i < href_div.length; i++) {
-                if (i < href_div.length-1 || href_div[i].length > 0) {
-                    this.subdir.push(href_div[i]);
-                }
-            }
-        }
-    }
-
-    in_hatena_bookmark()
-    {
-        return this.domain == 'b.hatena.ne.jp';
-    }
-    in_hatena_portal()
-    {
-        return this.domain == 'www.hatena.ne.jp';
-    }
-
-    in_top_page() {
-        return this.subdir.length == 0 ||
-               this.subdir[0].length == 0 ||
-               (this.subdir.length == 1 && this.subdir[0].indexOf("?via=") >= 0);
-    }
-    in_entry_page() {
-        return this.subdir.length >=1 &&
-               this.subdir[0] == 'entry';
-    }
-    in_search_page() {
-        return this.subdir.length >=1 &&
-               this.subdir[0] == 'search';
-    }
-    in_hotentry_page() {
-        return this.subdir.length >=1 &&
-               this.subdir[0] == 'hotentry';
-    }
-    in_entrylist_page() {
-        return this.subdir.length >=1 &&
-               (this.subdir[0] == 'entrylist' ||
-                this.subdir[0].indexOf('entrylist?url=') >= 0);
-    }
-
-    in_user_bookmark_page() {
-        return (this.subdir.length >=2 &&
-                this.subdir[1] == 'bookmark') ||
-               (!this.in_top_page() &&
-                !this.in_entry_page() &&
-                !this.in_search_page() &&
-                !this.in_hotentry_page() &&
-                !this.in_entrylist_page() &&
-                !this.in_my_unread_bookmark_page() &&
-                !this.in_my_add_page());
-    }
-    in_my_unread_bookmark_page() {
-        return this.subdir.length >=2 &&
-               this.subdir[1] == 'unread_bookmark';
-    }
-    in_my_add_page() {
-        return this.subdir.length >=2 &&
-               this.subdir[1] == 'add';
-    }
-}
-
-/*!
  *  @brief  はてなブックマークフィルタ
  */
 class HatenaBookmarkFilter {
 
-    constructor() {
-        this.current_location = new urlWrapper(location.href);
+    initialize() {
+        const active = this.storage.json.active;
+        const loc = this.current_location;
+        if (loc.in_entry_page() || loc.in_user_bookmark_page()) {
+            this.star_filter = new HatenaStarFilter(this.storage);
+        } else {
+            this.star_filter = null;
+        }
+        if (loc.in_entry_page()) {
+            this.contextmenu_controller = new ContextMenuController_Entry(active);
+        } else if (loc.in_top_page() ||
+                   loc.in_hotentry_page() ||
+                   loc.in_entrylist_page() ||
+                   loc.in_search_page()) {
+            this.contextmenu_controller = new ContextMenuController_Bookmark(active);
+        } else {
+            this.contextmenu_controller = null;
+        }
+    }
+
+    tell_get_json(request) {
+        if (this.star_filter) {
+            this.star_filter.reply_hatenaAPI_entry(request);
+        }
+    }
+
+    filtering_star_json_cache() {
+        if (this.star_filter) {
+            this.star_filter.filtering_star_json_cache();
+        }
+    }
+
+    /*!
+     *  @param storage  ストレージインスタンス(shared_ptr的なイメージ)
+     */
+    constructor(storage) {
+        this.storage = storage;
         this.fixed_url_filter = new fixedURLFilter();
         //
+        this.current_location = new urlWrapper(location.href);
         this.search_container_timer = null;
         this.container_observer = null;
         this.bookmark_observer = null;
         this.comment_observer = null;
         this.marking_observer = null;
+
+        this.initialize();
     }
 
-    load() {
-        this.storage = new StorageData();
-        this.star_filter = new HatenaStarFilter(this.storage);
-        this.storage.load().then(() => {
-            const ldata = this.storage.json;
+    callback_domloaded() {
+        const loc = this.current_location;
+        const ldata = this.storage.json;
+        if (ldata.ng_thumbnail) {
+            // observerによるサムネイル除去が行われないことがあるのでこのタイミングでも一発叩いておく
+            // (mobile版ではcontainerノード発見が遅すぎてはelement追加し終えてることがある)
+            this.filtering_thumbnail();
             //
-            if (ldata.ng_thumbnail) {
-                this.container_observer = new MutationObserver((records)=> {
-                    this.filtering_thumbnail();
-                });
-                // サムネイル除去用interval_timer登録
-                this.search_container_timer = setInterval(()=> {
-                    // サムネイル除去はDOM構築と平行でやりたい
-                    // → timerで根っこのelement(.container)構築を待つ
-                    //    以降はobserverでelement追加をhookして除去実行
-                    var container = document.getElementById("container");
-                    if (container == null) {
-                        // mobile対応
-                        container = document.getElementsByClassName("touch-container")[0];
-                    }
-                    if (container != null) {
-                        this.container_observer.observe(container, {
-                          childList: true,
-                          subtree: true,
-                        });
-                        // timerはもういらないので捨てる
-                        clearInterval(this.search_container_timer);
-                    }
-                }, 1);
-            }
-            // DOM構築完了時の処理
-            document.addEventListener("DOMContentLoaded", ()=> {
-                const loc = this.current_location;
-                // observerによるサムネイル除去が行われないことがあるのでこのタイミングでも一発叩いておく
-                // (mobile版ではcontainerノード発見が遅すぎてはelement追加し終えてることがある)
-                if (ldata.ng_thumbnail) {
-                    this.filtering_thumbnail();
+            this.container_observer = new MutationObserver((records)=> {
+                this.filtering_thumbnail();
+            });
+            // サムネイル除去用interval_timer登録
+            this.search_container_timer = setInterval(()=> {
+                // サムネイル除去はDOM構築と並行でやりたい
+                // → timerで根っこのelement(.container)構築を待つ
+                //    以降はobserverでelement追加をhookして除去実行
+                var container = document.getElementById("container");
+                if (container == null) {
+                    // mobile対応
+                    container = document.getElementsByClassName("touch-container")[0];
                 }
-                //
-                if (ldata.active) {
-                    this.filtering_bookmark();
-                    //
-                    this.bookmark_observer = new MutationObserver((records)=> {
-                        this.filtering_bookmark();
+                if (container != null) {
+                    this.container_observer.observe(container, {
+                      childList: true,
+                      subtree: true,
                     });
-                    this.comment_observer = new MutationObserver((records)=> {
-                        if (loc.in_entry_page()) {
-                            this.star_filter.filtering_bookmark_entry_about_star();
-                            this.filtering_bookmark_entry_comment();
-                        } else if (loc.in_user_bookmark_page()) {
-                            this.star_filter.filtering_user_bookmark_comment_stars();
-                        }
-                    });
-                    // DOM構築完了後に追加される遅延elementもフィルタにかけたい
-                    // → observerでelement追加をhookしfiltering実行
-                    var elem_bookmark = [];
-                    var elem_comment = [];
-                    if (loc.in_hatena_bookmark()) {
-                        if (loc.in_user_bookmark_page()) {
-                            // ブコメ
-                            elem_comment.push(this.get_user_bookmerk_item_list_node());
-                        } else if (loc.in_entry_page()) {
-                            // ブコメ
-                            elem_comment.push($("div.js-bookmarks-sort-panels")[0]);
-                            // 記事概要
-                            elem_comment.push($("section.entry-about.js-entry-about")[0]);
-                            // ブックマークしたすべてのユーザー
-                            elem_comment.push($("div.entry-usersModal.js-all-bookmarkers-modal.is-hidden")[0]);
-                            // エントリページの「関連記事」
-                            elem_bookmark.push($("section.entry-relationContents")[0]);
-                        } else if (loc.in_top_page()) {
-                            // トップ記事の隣に出るPR枠
-                            elem_bookmark.push($(".entrylist-header")[0]);
-                            // はてブトップ：キュレーション枠
-                            elem_bookmark.push($(".entrylist-unit.js-curation-unit1")[0]);
-                            elem_bookmark.push($(".entrylist-unit.js-curation-unit2")[0]);
-                            elem_bookmark.push($(".entrylist-unit.js-curation-unit3")[0]);
-                            // はてブトップ「ブログ-日記の人気エントリー」：PR枠
-                            elem_bookmark.push($(".entrylist-unit.js-popular-blog-issue-unit")[0]);
-                        } else if (loc.in_search_page() ||
-                                   loc.in_my_unread_bookmark_page() ||
-                                   loc.in_my_add_page()) {
-                            // ないよ
-                        } else {
-                            // トップ記事の隣に出るPR枠
-                            elem_bookmark.push($(".entrylist-header")[0]);
-                        }
-                    } else if(loc.in_hatena_portal()) {
-                        // はてなトップのPR枠
-                        elem_bookmark.push($(".hotentry.box.selected")[0]);
-                    }
-                    //
-                    for (var e of elem_bookmark) {
-                        if (e != null) {
-                            this.bookmark_observer.observe(e, {
-                                childList: true,
-                                subtree: true,
-                            });
-                        }
-                    }
-                    if ((ldata.ng_user != null && ldata.ng_user.length > 0) ||
-                        (ldata.ng_comment != null && ldata.ng_comment.length > 0)) {
-                        for (var e of elem_comment) {
-                            if (e != null) {
-                                this.comment_observer.observe(e, {
-                                    childList: true,
-                                    subtree: true,
-                                });
-                            }
-                        }
-                    }
+                    // timerはもういらないので捨てる
+                    clearInterval(this.search_container_timer);
                 }
-                //
-                if (ldata.mark_owned_star == null || ldata.mark_owned_star) {
-                    // 追加機能なのでデフォルトONにして認知度を上げてみる
-                    if (loc.in_hatena_bookmark()) {
-                        this.marking_observer = new MutationObserver((records)=> {
-                            if (loc.in_entry_page()) {
-                                this.star_filter.marking_owned_star_bookmark_comment();
-                            } else if (loc.in_user_bookmark_page()) {
-                                this.star_filter.marking_owned_star_user_bookmark_comment();
-                            }
-                        });
-                        var elem_marking = [];
-                        if (loc.in_user_bookmark_page()) {
-                            // ブコメ
-                            elem_marking.push(this.get_user_bookmerk_item_list_node());
-                        } else if (loc.in_entry_page()) {
-                            // ブコメ
-                            elem_marking.push($("div.js-bookmarks-sort-panels")[0]);
-                            // 記事概要
-                            elem_marking.push($("section.entry-about.js-entry-about")[0]);
-                            // ブックマークしたすべてのユーザー
-                            elem_marking.push($("div.entry-usersModal.js-all-bookmarkers-modal.is-hidden")[0]);
-                        }
-                        for (var e of elem_marking) {
-                            if (e != null) {
-                                this.marking_observer.observe(e, {
-                                    childList: true,
-                                    subtree: true,
-                                });
-                            }
-                        }
-                    }
+            }, 1);
+        }
+        //
+        if (ldata.active) {
+            this.filtering_bookmark();
+            //
+            this.bookmark_observer = new MutationObserver((records)=> {
+                this.filtering_bookmark();
+            });
+            this.comment_observer = new MutationObserver((records)=> {
+                if (loc.in_entry_page()) {
+                    this.star_filter.filtering_bookmark_entry_about_star();
+                    this.filtering_bookmark_entry_comment();
+                } else if (loc.in_user_bookmark_page()) {
+                    this.star_filter.filtering_user_bookmark_comment_stars();
                 }
             });
-        });
+            // DOM構築完了後に追加される遅延elementもフィルタにかけたい
+            // → observerでelement追加をhookしfiltering実行
+            var elem_bookmark = [];
+            var elem_comment = [];
+            if (loc.in_hatena_bookmark()) {
+                if (loc.in_user_bookmark_page()) {
+                    // ブコメ
+                    elem_comment.push(this.get_user_bookmerk_item_list_node());
+                } else if (loc.in_entry_page()) {
+                    // ブコメ
+                    elem_comment.push($("div.js-bookmarks-sort-panels")[0]);
+                    // 記事概要
+                    elem_comment.push($("section.entry-about.js-entry-about")[0]);
+                    // ブックマークしたすべてのユーザー
+                    elem_comment.push($("div.entry-usersModal.js-all-bookmarkers-modal.is-hidden")[0]);
+                    // エントリページの「関連記事」
+                    elem_bookmark.push($("section.entry-relationContents")[0]);
+                } else if (loc.in_top_page()) {
+                    // トップ記事の隣に出るPR枠
+                    elem_bookmark.push($(".entrylist-header")[0]);
+                    // はてブトップ：キュレーション枠
+                    elem_bookmark.push($(".entrylist-unit.js-curation-unit1")[0]);
+                    elem_bookmark.push($(".entrylist-unit.js-curation-unit2")[0]);
+                    elem_bookmark.push($(".entrylist-unit.js-curation-unit3")[0]);
+                    // はてブトップ「ブログ-日記の人気エントリー」：PR枠
+                    elem_bookmark.push($(".entrylist-unit.js-popular-blog-issue-unit")[0]);
+                } else if (loc.in_search_page() ||
+                           loc.in_my_unread_bookmark_page() ||
+                           loc.in_my_add_page()) {
+                    // ないよ
+                } else {
+                    // トップ記事の隣に出るPR枠
+                    elem_bookmark.push($(".entrylist-header")[0]);
+                }
+            } else if(loc.in_hatena_portal()) {
+                // はてなトップのPR枠
+                elem_bookmark.push($(".hotentry.box.selected")[0]);
+            }
+            //
+            for (var e of elem_bookmark) {
+                if (e != null) {
+                    this.bookmark_observer.observe(e, {
+                        childList: true,
+                        subtree: true,
+                    });
+                }
+            }
+            if ((ldata.ng_user != null && ldata.ng_user.length > 0) ||
+                (ldata.ng_comment != null && ldata.ng_comment.length > 0)) {
+                for (var e of elem_comment) {
+                    if (e != null) {
+                        this.comment_observer.observe(e, {
+                            childList: true,
+                            subtree: true,
+                        });
+                    }
+                }
+            }
+        }
+        //
+        if (ldata.mark_owned_star == null || ldata.mark_owned_star) {
+            // 追加機能なのでデフォルトONにして認知度を上げてみる
+            if (loc.in_hatena_bookmark()) {
+                this.marking_observer = new MutationObserver((records)=> {
+                    if (loc.in_entry_page()) {
+                        this.star_filter.marking_owned_star_bookmark_comment();
+                    } else if (loc.in_user_bookmark_page()) {
+                        this.star_filter.marking_owned_star_user_bookmark_comment();
+                    }
+                });
+                var elem_marking = [];
+                if (loc.in_user_bookmark_page()) {
+                    // ブコメ
+                    elem_marking.push(this.get_user_bookmerk_item_list_node());
+                } else if (loc.in_entry_page()) {
+                    // ブコメ
+                    elem_marking.push($("div.js-bookmarks-sort-panels")[0]);
+                    // 記事概要
+                    elem_marking.push($("section.entry-about.js-entry-about")[0]);
+                    // ブックマークしたすべてのユーザー
+                    elem_marking.push($("div.entry-usersModal.js-all-bookmarkers-modal.is-hidden")[0]);
+                }
+                for (var e of elem_marking) {
+                    if (e != null) {
+                        this.marking_observer.observe(e, {
+                            childList: true,
+                            subtree: true,
+                        });
+                    }
+                }
+            }
+        }
     }
-
     /*!
      *  @brief  ユーザブックマークページのブコメリスト根ノードを得る
      *  @note   PCとmobileで名前が異なるのでラップしただけ
@@ -597,11 +531,10 @@ class HatenaBookmarkFilter {
     /*!
      *  @brief  エントリページの「ブックマークしたユーザー」にフィルタをかける
      */ 
-    filtering_bookmark_entry_user()
-    {
+    filtering_bookmark_entry_user() {
         $("li.bookmarker.js-bookmarker").each((inx, elem_bookmarker)=> {
-            const bookmarker = $(elem_bookmarker).attr("data-bookmarker");
-            if (this.storage.user_filter(bookmarker)) {
+            const bookmarker = $(elem_bookmarker).attr("data-user-name");
+            if (bookmarker && this.storage.user_filter(bookmarker)) {
                 $(elem_bookmarker).detach();
             }
         });
@@ -616,7 +549,7 @@ class HatenaBookmarkFilter {
         $("span.entry-comment-username").each((inx, elem_username)=> {
             var star_filter = this.star_filter;
             //
-            const parent = $(elem_username).parent();
+            const parent = HatenaDOMUtil.find_comment_root(elem_username);
             if (star_filter.is_filtered_node(parent)) {
                 // フィルタ済みでもinner_star展開時の処理は必要
                 star_filter.filtering_child_added_stars(parent);
@@ -643,6 +576,17 @@ class HatenaBookmarkFilter {
             // ★フィルタ
             star_filter.filtering_bookmark_comment_stars(username, parent);
         });
+    }
+
+    /*!
+     *  @brief  エントリページのユーザ関連のみフィルタリング
+     */
+    filtering_entry_user() {
+        if (!this.current_location.in_entry_page()) {
+            return;
+        }
+        this.filtering_bookmark_entry_comment();
+        this.filtering_bookmark_entry_user();
     }
 
 

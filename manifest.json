@@ -1,7 +1,11 @@
 {
    "background": {
-      "persistent": false,
-      "scripts": [ "js/background.js" ]
+      "persistent": true,
+      "scripts": [ "js/message_utility.js",
+                   "js/bg_message_sender.js",
+                   "js/bg_hatena_api_accessor.js",
+                   "js/bg_contextmenu_controller.js",
+                   "js/background.js" ]
    },
    "browser_action": {
       "default_icon": {
@@ -12,8 +16,24 @@
       "name": "Hatena Filter"
    },
    "content_scripts": [ {
-      "js": [ "js/jquery-3.3.1.min.js", "js/text_utility.js", "js/storage_data.js", "js/fixed_url_filter.js", "js/hatena_star_filter.js", "js/hatena_bookmark_filter.js",  "js/content.js" ],
-      "matches": [ "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*", "https://www.hatena.ne.jp/*", "https://b.hatena.ne.jp/*" ],
+      "js": [ "js/jquery-3.3.1.min.js",
+              "js/text_utility.js",
+              "js/message_utility.js",
+              "js/dom_utility.js",
+              "js/storage_data.js",
+              "js/url_wrapper.js",
+              "js/fixed_url_filter.js",
+              "js/hatena_dom_utility.js",
+              "js/contextmenu_controller.js",
+              "js/contextmenu_controller_bookmark.js",
+              "js/contextmenu_controller_entry.js",
+              "js/hatena_star_filter.js",
+              "js/hatena_bookmark_filter.js",
+              "js/content.js" ],
+      "matches": [ "http://www.hatena.ne.jp/*",
+                   "http://b.hatena.ne.jp/*",
+                   "https://www.hatena.ne.jp/*",
+                   "https://b.hatena.ne.jp/*" ],
       "run_at": "document_start"
    } ],
    "description": "はてなブックマークにフィルタ機能を追加するChrome拡張です。「ドメイン及びタイトル指定でのエントリ非表示」「ID及びワード指定でのブックマークコメント非表示」「スターを付けたコメントの強調表示」「サムネイル除去」が行えます。",
@@ -24,8 +44,9 @@
    "manifest_version": 2,
    "name": "はてなフィルタ",
    "author": "lvnkae",
-   "permissions": [ "tabs", "storage", "unlimitedStorage", "http://s.hatena.com/entry.json/*", "http://www.hatena.ne.jp/*", "http://b.hatena.ne.jp/*", "https://s.hatena.com/*", "https://www.hatena.ne.jp/*", "https://b.hatena.ne.jp/*" ],
+   "permissions": [ "tabs", "storage", "contextMenus",
+                    "https://s.hatena.com/entry.json/*" ],
    "short_name": "Hatena Filter",
    "update_url": "https://clients2.google.com/service/update2/crx",
-   "version": "1.0.3.6"
+   "version": "1.0.4.0"
 }

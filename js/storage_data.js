@@ -48,7 +48,7 @@ class StorageData {
     }
 
     update_text() {
-        const nlc = text_utility.new_line_code();
+        const nlc = text_utility.new_line_code_lf();
         this.ng_domain_text = "";
         for (const ngd of this.json.ng_domain) {
             this.ng_domain_text += ngd.keyword + nlc;
@@ -69,6 +69,28 @@ class StorageData {
                 this.ng_comment_text += ngc + nlc;
             }
         }
+    }
+
+    /*!
+     *  @brief  ドメインフィルタ設定を追加(重複チェックあり)
+     *  @param  domain  ドメイン名(128文字上限)
+     *  @retval true    storage構成変更があった
+     */
+    add_domain_filter_with_check(domain) {
+        if (this.json.ng_domain == null) {
+            this.json.ng_domain = [];
+        }
+        for (const ngd of this.json.ng_domain) {
+            if (ngd.keyword.toLowerCase() == domain.toLowerCase()) {
+                return false;
+            }
+        }
+        var ng_url = {};
+        ng_url.keyword = domain;
+        ng_url.sub_dirs = [];
+        ng_url.black_titles = [];
+        this.json.ng_domain.push(ng_url);
+        return true;
     }
 
     /*!
@@ -120,6 +142,24 @@ class StorageData {
             }
         }
         return false;
+    }
+
+    /*!
+     *  @brief  ユーザ名フィルタ設定を追加(重複チェックあり)
+     *  @param  user    ユーザ名(24文字上限)
+     *  @retval true    storage構成変更があった
+     */
+    add_user_filter_with_check(user) {
+        if (this.json.ng_user == null) {
+            this.json.ng_user = [];
+        }
+        for (const ngu of this.json.ng_user) {
+            if (user == ngu) {
+                return false;
+            }
+        }
+        this.json.ng_user.push(user);
+        return true;
     }
 
     /*!
