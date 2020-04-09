@@ -8,7 +8,7 @@ class MessageUtil {
      *  @note   環境依存するのでラップしとく
      */
     static send_message(message) {
-        chrome.runtime.sendMessage(message);
+        browser.runtime.sendMessage(message);
     }
 
     static command_start_content() { return "start_content"; }

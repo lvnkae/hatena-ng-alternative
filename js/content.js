@@ -5,7 +5,7 @@ class Content {
 
     initialize() {
         // background用Listener
-        chrome.runtime.onMessage.addListener(
+        browser.runtime.onMessage.addListener(
             (request, sender, sendResponce)=> {
                 if (request.command == MessageUtil.command_get_hatena_json()) {
                     if (this.filter_instance) {

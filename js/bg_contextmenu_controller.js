@@ -13,7 +13,7 @@ class BGContextMenuController extends BGMessageSender {
     on_message(request) {
         if (request.title == null) {
             if (this.context_menu_item_id != null) {
-                chrome.contextMenus.update(this.context_menu_item_id, { 
+                browser.contextMenus.update(this.context_menu_item_id, { 
                     "visible": false
                 });
             }
@@ -27,7 +27,7 @@ class BGContextMenuController extends BGMessageSender {
                 this.menu_param = param;
             }
             //
-            chrome.contextMenus.update(this.context_menu_item_id, {
+            browser.contextMenus.update(this.context_menu_item_id, {
                 "title": request.title,
                 "visible": true
             });
@@ -44,7 +44,7 @@ class BGContextMenuController extends BGMessageSender {
         }
         // 拡張機能IDをitem_idとする(unique保証されてるので)
         this.context_menu_item_id = extention_id;
-        chrome.contextMenus.create({
+        browser.contextMenus.create({
             "title": "<null>",
             "id": this.context_menu_item_id,
             "type": "normal",
@@ -60,18 +60,18 @@ class BGContextMenuController extends BGMessageSender {
                 }
             }
         });
-        chrome.tabs.onActivated.addListener((active_info)=> {
+        browser.tabs.onActivated.addListener((active_info)=> {
             // tabが切り替わったら追加項目を非表示化する
             // 拡張機能管轄外のtabで追加項目が出しっぱなしになるため
-            chrome.contextMenus.update(this.context_menu_item_id, {
+            browser.contextMenus.update(this.context_menu_item_id, {
                 "visible": false
             });
         });
-        chrome.tabs.onUpdated.addListener((info)=> {
+        browser.tabs.onUpdated.addListener((info)=> {
             // 管轄のtabがupdateされたら追加項目を非表示化する
             // 拡張機能管轄外のURLへ移動した際、出っぱなしになるため
             if (this.is_connected_tab(info)) {
-                chrome.contextMenus.update(this.context_menu_item_id, {
+                browser.contextMenus.update(this.context_menu_item_id, {
                     "visible": false
                 });
             }
