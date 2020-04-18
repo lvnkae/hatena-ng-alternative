@@ -5,7 +5,6 @@ class Background {
     //
     constructor() {
         this.extention_id = '';
-        this.hatena_api_accessor = new BGHatenaApiAccessor();
         this.contextmenu_controller = new BGContextMenuController();
         //
         this.initialize();
@@ -18,7 +17,6 @@ class Background {
      */
     entry(extention_id, tab_id) {
         this.extention_id = extention_id;
-        this.hatena_api_accessor.entry(tab_id);
         this.contextmenu_controller.entry(tab_id);
         this.contextmenu_controller.create_menu(extention_id);
     }
@@ -26,9 +24,6 @@ class Background {
     initialize() {
         chrome.runtime.onMessage.addListener(
             (request, sender, sendResponse)=> {
-                if (request.command == MessageUtil.command_get_hatena_json()) {
-                    this.hatena_api_accessor.on_message(request, sender);
-                } else
                 if (request.command == MessageUtil.command_update_contextmenu()) {
                     this.contextmenu_controller.on_message(request);
                 } else

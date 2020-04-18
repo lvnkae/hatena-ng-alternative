@@ -6,11 +6,6 @@ class HatenaBookmarkFilter {
     initialize() {
         const active = this.storage.json.active;
         const loc = this.current_location;
-        if (loc.in_entry_page() || loc.in_user_bookmark_page()) {
-            this.star_filter = new HatenaStarFilter(this.storage);
-        } else {
-            this.star_filter = null;
-        }
         if (loc.in_entry_page()) {
             this.contextmenu_controller = new ContextMenuController_Entry(active);
         } else if (loc.in_top_page() ||
@@ -20,18 +15,6 @@ class HatenaBookmarkFilter {
             this.contextmenu_controller = new ContextMenuController_Bookmark(active);
         } else {
             this.contextmenu_controller = null;
-        }
-    }
-
-    tell_get_json(request) {
-        if (this.star_filter) {
-            this.star_filter.reply_hatenaAPI_entry(request);
-        }
-    }
-
-    filtering_star_json_cache() {
-        if (this.star_filter) {
-            this.star_filter.filtering_star_json_cache();
         }
     }
 
@@ -47,7 +30,6 @@ class HatenaBookmarkFilter {
         this.container_observer = null;
         this.bookmark_observer = null;
         this.comment_observer = null;
-        this.marking_observer = null;
 
         this.initialize();
     }
@@ -92,10 +74,7 @@ class HatenaBookmarkFilter {
             });
             this.comment_observer = new MutationObserver((records)=> {
                 if (loc.in_entry_page()) {
-                    this.star_filter.filtering_bookmark_entry_about_star();
                     this.filtering_bookmark_entry_comment();
-                } else if (loc.in_user_bookmark_page()) {
-                    this.star_filter.filtering_user_bookmark_comment_stars();
                 }
             });
             // DOM構築完了後に追加される遅延elementもフィルタにかけたい
@@ -150,39 +129,6 @@ class HatenaBookmarkFilter {
                 for (var e of elem_comment) {
                     if (e != null) {
                         this.comment_observer.observe(e, {
-                            childList: true,
-                            subtree: true,
-                        });
-                    }
-                }
-            }
-        }
-        //
-        if (ldata.mark_owned_star == null || ldata.mark_owned_star) {
-            // 追加機能なのでデフォルトONにして認知度を上げてみる
-            if (loc.in_hatena_bookmark()) {
-                this.marking_observer = new MutationObserver((records)=> {
-                    if (loc.in_entry_page()) {
-                        this.star_filter.marking_owned_star_bookmark_comment();
-                    } else if (loc.in_user_bookmark_page()) {
-                        this.star_filter.marking_owned_star_user_bookmark_comment();
-                    }
-                });
-                var elem_marking = [];
-                if (loc.in_user_bookmark_page()) {
-                    // ブコメ
-                    elem_marking.push(this.get_user_bookmerk_item_list_node());
-                } else if (loc.in_entry_page()) {
-                    // ブコメ
-                    elem_marking.push($("div.js-bookmarks-sort-panels")[0]);
-                    // 記事概要
-                    elem_marking.push($("section.entry-about.js-entry-about")[0]);
-                    // ブックマークしたすべてのユーザー
-                    elem_marking.push($("div.entry-usersModal.js-all-bookmarkers-modal.is-hidden")[0]);
-                }
-                for (var e of elem_marking) {
-                    if (e != null) {
-                        this.marking_observer.observe(e, {
                             childList: true,
                             subtree: true,
                         });
@@ -547,14 +493,8 @@ class HatenaBookmarkFilter {
     filtering_bookmark_entry_comment()
     {
         $("span.entry-comment-username").each((inx, elem_username)=> {
-            var star_filter = this.star_filter;
             //
             const parent = HatenaDOMUtil.find_comment_root(elem_username);
-            if (star_filter.is_filtered_node(parent)) {
-                // フィルタ済みでもinner_star展開時の処理は必要
-                star_filter.filtering_child_added_stars(parent);
-                return;
-            }
             const a_tag = $(elem_username).find("a");
             const username = $(a_tag[0]).text();
             // コメントフィルタ
@@ -573,8 +513,6 @@ class HatenaBookmarkFilter {
                 }
                 $(parent).attr("comment_filtered", "");
             }
-            // ★フィルタ
-            star_filter.filtering_bookmark_comment_stars(username, parent);
         });
     }
 

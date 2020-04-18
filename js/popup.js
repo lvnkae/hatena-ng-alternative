@@ -45,9 +45,6 @@ class Popup {
         this.checkbox_sw_thumbnail().change(()=> {
             this.button_save_enable();
         });
-        this.checkbox_sw_owned_star().change(()=> {
-            this.button_save_enable();
-        });
         //
         this.selectbox_filter().change(()=> {
             this.selectbox_filter_change();
@@ -82,9 +79,6 @@ class Popup {
     }
     checkbox_sw_thumbnail() {
         return  $("input[name=sw_thumbnail]");
-    }
-    checkbox_sw_owned_star() {
-        return  $("input[name=sw_owned_star]");
     }
 
     textarea_filter_domain() {
@@ -276,7 +270,6 @@ class Popup {
         }
         this.storage.json.active = this.checkbox_sw_filter().prop("checked");
         this.storage.json.ng_thumbnail = this.checkbox_sw_thumbnail().prop("checked");
-        this.storage.json.mark_owned_star = this.checkbox_sw_owned_star().prop("checked");
         this.storage.save();
         //
         this.button_save_disable();
@@ -294,9 +287,6 @@ class Popup {
         var json = this.storage.json;
         this.checkbox_sw_filter().prop("checked", json.active);
         this.checkbox_sw_thumbnail().prop("checked", json.ng_thumbnail);
-        this.checkbox_sw_owned_star().prop("checked",
-            (json.mark_owned_star == null) ?true
-                                           :json.mark_owned_star);
     }
 
     updateTextarea() {

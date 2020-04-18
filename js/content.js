@@ -7,11 +7,6 @@ class Content {
         // background用Listener
         chrome.runtime.onMessage.addListener(
             (request, sender, sendResponce)=> {
-                if (request.command == MessageUtil.command_get_hatena_json()) {
-                    if (this.filter_instance) {
-                        this.filter_instance.tell_get_json(request);
-                    }
-                } else
                 if (request.command == MessageUtil.command_filtering_domain()) {
                     const update
                         = this.storage.add_domain_filter_with_check(request.domain);
@@ -29,7 +24,6 @@ class Content {
                         this.storage.save();
                         if (this.storage.json.active) {
                             HatenaDOMUtil.remove_filtered_marker();
-                            this.filter_instance.filtering_star_json_cache();
                             this.filter_instance.filtering_entry_user();
                         }
                     }
@@ -40,6 +34,12 @@ class Content {
     }
 
     callback_domloaded() {
+        // titleのタグ削除
+        $("title").each((inx, elem)=> {
+            const title = $(elem).text().replace(/^\[B!.+\]/, "");
+            $(elem).text(title);
+        });
+        //
         this.filter_instance = new HatenaBookmarkFilter(this.storage);
         this.filter_instance.callback_domloaded();
     }
