@@ -36,7 +36,7 @@ class Content {
     callback_domloaded() {
         // titleのタグ削除
         $("title").each((inx, elem)=> {
-            const title = $(elem).text().replace(/^\[B!.+\]/, "");
+            const title = $(elem).text().replace(/^\[B!.*?\]/, "");
             $(elem).text(title);
         });
         //
