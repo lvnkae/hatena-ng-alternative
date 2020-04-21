@@ -279,18 +279,13 @@ class HatenaBookmarkFilter {
      */
     filtering_bookmark_issue()
     {
-        $(".entrylist-contents-list-title").each((inx, elem_title)=> {
-            const children = $(elem_title).children();
-            if (children.length != 1) {
+        $(".entrylist-issue-list-contents").each((inx, elem_title)=> {
+            const a_tag = $(elem_title).find("a");
+            if (a_tag.length == 0) {
                 return;
             }
-            const elem_favicon = children[0];
-            if ($(elem_favicon).attr("class") != "favicon") {
-                return;
-            }
-            const attr_src = $(elem_favicon).attr("src");
-            const href = this.get_url_from_favicon(attr_src);
-            const title = $(elem_title).text();
+            const href = $(a_tag[0]).attr("href");
+            const title = $(a_tag[0]).attr("title");
             if (this.bookmark_filter(href, title)) {
                 $(elem_title).parent().detach();
             }
