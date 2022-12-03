@@ -66,7 +66,8 @@ class urlWrapper {
     }
     in_search_page() {
         return this.subdir.length >=1 &&
-               this.subdir[0] == 'search';
+               (this.subdir[0] == 'search' ||
+                this.subdir[0] == 'q');
     }
     in_hotentry_page() {
         return this.subdir.length >=1 &&

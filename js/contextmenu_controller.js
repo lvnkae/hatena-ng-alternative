@@ -4,6 +4,28 @@
 class ContextMenuController {
 
     /*!
+     *  @brief  右クリックメニューの「$(domain)を非表示化」を有効化
+     *  @param  element
+     */
+    on_domainfilter(element) {
+        const dm = this.get_domain(element);
+        if (dm == null) {
+            return false;
+        }
+        const domain = text_utility.remove_line_ht_space(dm)
+        const max_disp_domain = 128;
+        const domain_st = domain.slice(0, max_disp_domain-1);
+        const title = domain_st + "を非表示化";
+        MessageUtil.send_message({
+            command: MessageUtil.command_update_contextmenu(),
+            click_command: MessageUtil.command_filtering_domain(),
+            title: title,
+            domain: domain_st,
+        });
+        return true;
+    }
+
+    /*!
      *  @brief  マウスの右ボタンか
      *  @param  button  ボタン情報
      */

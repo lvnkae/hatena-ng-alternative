@@ -25,6 +25,7 @@
               "js/hatena_dom_utility.js",
               "js/contextmenu_controller.js",
               "js/contextmenu_controller_bookmark.js",
+              "js/contextmenu_controller_searched_bm.js",
               "js/contextmenu_controller_entry.js",
               "js/hatena_bookmark_filter.js",
               "js/content.js" ],
@@ -48,5 +49,5 @@
    "name": "はてなフィルタ",
    "permissions": [ "tabs", "storage", "contextMenus" ],
    "short_name": "Hatena Filter",
-   "version": "1.0.2.1"
+   "version": "1.0.3.0"
 }

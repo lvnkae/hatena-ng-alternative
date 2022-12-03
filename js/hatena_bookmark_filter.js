@@ -10,9 +10,11 @@ class HatenaBookmarkFilter {
             this.contextmenu_controller = new ContextMenuController_Entry(active);
         } else if (loc.in_top_page() ||
                    loc.in_hotentry_page() ||
-                   loc.in_entrylist_page() ||
-                   loc.in_search_page()) {
+                   loc.in_entrylist_page()) {
             this.contextmenu_controller = new ContextMenuController_Bookmark(active);
+        } else if (loc.in_search_page()) {
+            this.contextmenu_controller
+                = new ContextMenuController_SearchedBookmark(active);
         } else {
             this.contextmenu_controller = null;
         }
@@ -554,6 +556,7 @@ class HatenaBookmarkFilter {
                     $(".centerarticle-entry-image").each((inx, elem)=> {
                         $(elem).detach();
                     });
+                    HatenaDOMUtil.remove_min_height_in_search_page();
                 }
             }
         } else if (loc.in_hatena_portal()) {
