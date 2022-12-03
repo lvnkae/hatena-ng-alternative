@@ -51,4 +51,14 @@ class HatenaDOMUtil {
             }
         });
     }
+
+    /*!
+     *  @brief  検索ページの縦余白を消す
+     *  @note   サムネイル用のスペース
+     */
+    static remove_min_height_in_search_page() {
+        const anti_min_height =
+        '.page-entrysearch .has-image{min-height: 0px;}'
+        $('body').append('<style>' + anti_min_height + '</style>');
+    }
 }

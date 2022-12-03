@@ -35,27 +35,6 @@ class ContextMenuController_Bookmark extends ContextMenuController {
     }
 
     /*!
-     *  @brief  右クリックメニューの「$(domain)を非表示化」を有効化
-     *  @param  element
-     */
-    on_domainfilter(element) {
-        const domain = this.get_domain(element);
-        if (domain == null) {
-            return false;
-        }
-        const max_disp_domain = 128;
-        const domain_st = domain.slice(0, max_disp_domain-1);
-        const title = domain_st + "を非表示化";
-        MessageUtil.send_message({
-            command: MessageUtil.command_update_contextmenu(),
-            click_command: MessageUtil.command_filtering_domain(),
-            title: title,
-            domain: domain_st,
-        });
-        return true;
-    }
-
-    /*!
      *  @brief  event:右クリック
      *  @param  loc     現在location(urlWrapper)
      *  @param  element 右クリックされたelement
@@ -63,8 +42,7 @@ class ContextMenuController_Bookmark extends ContextMenuController {
     event_mouse_right_click(loc, element) {
         if (!loc.in_top_page() &&
             !loc.in_hotentry_page() &&
-            !loc.in_entrylist_page() &&
-            !loc.in_search_page()) {
+            !loc.in_entrylist_page()) {
             return;
         }
         if (this.filter_active) {

@@ -29,6 +29,25 @@ class TextUtil {
     }
 
     /*!
+     *  @brief  行頭スペースを削除
+     */
+    remove_line_head_space(string) {
+        return string.replace(/^\s+/g, "");
+    }
+    /*!
+     *  @brief  行末スペースを削除
+     */
+    remove_line_tail_space(string) {
+        return string.replace(/\s+$/g, "");
+    }
+
+    remove_line_ht_space(string) {
+        return this.remove_line_tail_space(
+                this.remove_line_head_space(string));
+    }
+
+
+    /*!
      *  @brief  改行で連結された文字列から座標でワード検索する
      *  @param  pos     文字位置
      *  @param  text    改行で連結された文字列
