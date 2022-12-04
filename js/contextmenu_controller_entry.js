@@ -4,11 +4,11 @@
 class ContextMenuController_Entry extends ContextMenuController {
 
     /*!
-     *  @brief  ユーザIDを得る
-     *  @param  nd_cm   ブックマークコメントノード
+     *  @brief  非表示対象名を返す
+     *  @param  element 起点ノード
      */
-    get_userid(nd_cm) {
-        const nd_userid = $(nd_cm).find("span.entry-comment-username");
+    get_mute_keyword(element) {
+        const nd_userid = $(element).find("span.entry-comment-username");
         if (nd_userid.length == 0) {
             return null;
         }
@@ -18,50 +18,22 @@ class ContextMenuController_Entry extends ContextMenuController {
         }
         return $(a_tag[0]).text();
     }
-    
-    /*!
-     *  @brief  右クリックメニューの「$(domain)を非表示化」を有効化
-     *  @param  element
-     */
-    on_commentfilter(element) {
-        const userid = this.get_userid(element);
-        if (userid == null) {
-            return false;
-        }
-        const max_disp_userid = 24;
-        const userid_st = userid.slice(0, max_disp_userid-1);
-        const title = userid_st + "を非表示化";
-        MessageUtil.send_message({
-            command: MessageUtil.command_update_contextmenu(),
-            click_command: MessageUtil.command_filtering_user(),
-            title: title,
-            userid: userid_st,
-        });
-        return true;
-    }
 
     /*!
-     *  @brief  event:右クリック
-     *  @param  loc     現在location(urlWrapper)
+     *  @brief  起点ノードを得る
      *  @param  element 右クリックされたelement
      */
-    event_mouse_right_click(loc, element) {
-        if (!loc.in_entry_page()) {
-            return;
-        }
-        if (this.filter_active) {
-            const nd_cm = HatenaDOMUtil.find_comment_root(element);
-            if (nd_cm.length > 0 && this.on_commentfilter(nd_cm)) {
-                return;
-            }
-        }
-        ContextMenuController.off_original_menu();
+    get_base_node(element) {
+        return HatenaDOMUtil.find_comment_root(element);
     }
+
+    get_command_function() {
+        return ContextMenuController.update_contextmenu_by_userid;
+    }    
 
     /*!
      */
     constructor(active) {
-        super();
-        this.filter_active = active;
+        super(active);
     }
 }

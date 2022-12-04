@@ -3,69 +3,66 @@
  */
 class ContextMenuController {
 
-    /*!
-     *  @brief  右クリックメニューの「$(domain)を非表示化」を有効化
-     *  @param  element
-     */
-    on_domainfilter(element) {
-        const dm = this.get_domain(element);
-        if (dm == null) {
-            return false;
-        }
-        const domain = text_utility.remove_line_ht_space(dm)
-        const max_disp_domain = 128;
-        const domain_st = domain.slice(0, max_disp_domain-1);
-        const title = domain_st + "を非表示化";
+    static update_contextmenu_by_domain(title, domain_str) {
         MessageUtil.send_message({
             command: MessageUtil.command_update_contextmenu(),
             click_command: MessageUtil.command_filtering_domain(),
             title: title,
-            domain: domain_st,
+            domain: domain_str,
         });
-        return true;
+    }
+    static update_contextmenu_by_userid(title, userid_str) {
+        MessageUtil.send_message({
+            command: MessageUtil.command_update_contextmenu(),
+            click_command: MessageUtil.command_filtering_user(),
+            title: title,
+            userid: userid_str,
+        });
     }
 
     /*!
-     *  @brief  マウスの右ボタンか
-     *  @param  button  ボタン情報
+     *  @brief  右クリックメニューの「$(hoge)を非表示化」を有効化
+     *  @param  element
      */
-    static is_button_right(button) {
-        return button == 2;
+    on_mute_menu(element) {
+        const kw = this.get_mute_keyword(element);
+        if (kw == null) {
+            return false;
+        }
+        const keyword = text_utility.remove_line_ht_space(kw)
+        if (keyword == this.context_menu.keyword) {
+            return; true;
+        }
+        this.context_menu.keyword = keyword;
+        const max_disp_keyword = 128;
+        const keyword_str = keyword.slice(0, max_disp_keyword-1);
+        const title = keyword_str + "を非表示化";
+        this.get_command_function()(title, keyword);
+        return true;
     }
 
     /*!
      *  @brief  右クリックメニューの拡張機能固有項目を無効化
      */
-    static off_original_menu() {
+    off_original_menu() {
+        if (null == this.context_menu.keyword) {
+            return true; // 前回と同じなので不要
+        }
+        this.context_menu.keyword = null;
         MessageUtil.send_message({
             command: MessageUtil.command_update_contextmenu(),
         });
     }
 
-    /*!
-     *  @brief  固有メニュー無効化
-     *  @param  doc     無効化対象DOM
-     *  @note   document外document用(子iframeとか)
-     */
-    disable_original_menu(doc) {
-        doc.addEventListener('mousedown', (e)=> {
-            if (!ContextMenuController.is_button_right(e.button)) {
+    update_context_menu() {
+        if (this.filter_active) {
+            if (this.monitoring_target_base.length > 0 &&
+                this.on_mute_menu(this.monitoring_target_base)) {
                 return;
             }
-            ContextMenuController.off_original_menu();
-            this.monitoring_target = null;
-        });
-        doc.addEventListener('mousemove', (e)=> {
-            if (!ContextMenuController.is_button_right(e.buttons)) {
-                return;
-            }
-            if (null == this.monitoring_target) {
-                return;
-            }
-            ContextMenuController.off_original_menu();
-            this.monitoring_target = null;
-        });
-    }
+        }
+        this.off_original_menu();
+    }    
 
     enable_original_menu(doc) {
         // 右クリックListener
@@ -76,31 +73,35 @@ class ContextMenuController {
         //   'mousedown' 右ボタン押下時にcontextmenuをupdate
         //   'mousemove' 右ボタン押下+移動してたらtargetの変化を監視し再update
         // の2段Listener体制でねじ込む
-        doc.addEventListener('mousedown', (e)=> {
-            if (!ContextMenuController.is_button_right(e.button)) {
-                return;
-            }
-            this.event_mouse_right_click(new urlWrapper(location.href), e.target);
-            this.monitoring_target = e.target;
-        });
+        // ※service_workerでは'mousedown'でも間に合わないタイミングがある
+        // ※cf.破棄→再生成直後(確定で間に合わない)
+        // ※'mousemove'で監視対象が変化したら即updateするようにしてみる
         doc.addEventListener('mousemove', (e)=> {
-            // note
-            // 移動中のマウスボタン押下は"buttons"で見る
-            if (!ContextMenuController.is_button_right(e.buttons)) {
-                return;
-            }
             if (e.target == this.monitoring_target) {
                 return;
             }
-            this.event_mouse_right_click(new urlWrapper(location.href), e.target);
+            const base_node = this.get_base_node(e.target);
+            if (base_node[0] == this.monitoring_target_base[0]) {
+                return;
+            }
             this.monitoring_target = e.target;
+            this.monitoring_target_base = base_node;
+            this.update_context_menu();
         });
     }
 
-
-    constructor() {
-        this.prevent = false;
+    /*!
+     *  @brief  各種バッファのクリア
+     */
+    clear() {
         this.monitoring_target = null;
+        this.monitoring_target_base = {length:0};
+        this.context_menu =  { keyword:null };
+    }
+
+    constructor(active) {
+        this.filter_active = active;
+        this.clear();
         this.enable_original_menu(document);
     }
 }

@@ -1,33 +1,48 @@
 /*!
- *  @brief  右クリックメニュー制御(background側)
- *  @note   実務者
- *  @note   itemを複数登録すると階層化されてしまう(余計なお世話すぎる)ので
- *  @note   1itemを使い回す、美しくない構成にせざるを得ない
+ *  @brief  click時にfrontへ送り返すミュート対象情報
+ *  @note   v3対応でinstance化できなくなったのでstorageに入れる
+ *  @note   (global-workも併用)
  */
-class BGContextMenuController extends BGMessageSender {
+class MuteParam {
+    constructor(click_command = '', domain = '', userid = '') {
+        this.click_command = click_command;
+        this.domain = domain;
+        this.userid = userid;
+    }
+}
+
+/*!
+ *  @brief  右クリックメニュー制御(background側)
+ */
+class BGContextMenuController {
+
+    static CONTEXT_MENUS_ID = "HatenaFilter1.0.5";
 
     /*!
      *  @brief  onMessageコールバック
      *  @param  request
      */
-    on_message(request) {
+    static on_message(request) {
+        const menusid = BGContextMenuController.CONTEXT_MENUS_ID;
         if (request.title == null) {
-            if (this.context_menu_item_id != null) {
-                chrome.contextMenus.update(this.context_menu_item_id, { 
-                    "visible": false
-                });
-            }
+            chrome.contextMenus.update(menusid, { 
+                "visible": false
+            });
         } else {
             const click_command = request.click_command;
-            if (MessageUtil.command_filtering_domain() ||
-                MessageUtil.command_filtering_user()) {
-                const param = {click_command: click_command,
-                               domain: request.domain,
-                               userid: request.userid};
-                this.menu_param = param;
+            if (click_command == MessageUtil.command_filtering_domain() ||
+                click_command == MessageUtil.command_filtering_user()) {
+                gMuteParam = new MuteParam(request.click_command,
+                                           request.domain,
+                                           request.userid);
+                // service_workerが破棄されたときのためにstorageに書いておく
+                {
+                    var mute_obj = {};
+                    mute_obj[menusid] = gMuteParam;
+                    chrome.storage.local.set(mute_obj, ()=> {});
+                }
             }
-            //
-            chrome.contextMenus.update(this.context_menu_item_id, {
+            chrome.contextMenus.update(menusid, {
                 "title": request.title,
                 "visible": true
             });
@@ -36,53 +51,39 @@ class BGContextMenuController extends BGMessageSender {
 
     /*!
      *  @brief  固有右クリックメニュー登録
-     *  @param  extention_id    拡張機能ID
      */
-    create_menu(extention_id) {
-        if (this.context_menu_item_id != null) {
-            return;
-        }
-        // 拡張機能IDをitem_idとする(unique保証されてるので)
-        this.context_menu_item_id = extention_id;
+    static create_menu() {
         chrome.contextMenus.create({
             "title": "<null>",
-            "id": this.context_menu_item_id,
+            "id": BGContextMenuController.CONTEXT_MENUS_ID,
             "type": "normal",
             "contexts" : ["all"],
             "visible" : true,
-            "onclick" : (info)=> {
-                const click_command = this.menu_param.click_command;
-                if (click_command == MessageUtil.command_filtering_domain() ||
-                    click_command == MessageUtil.command_filtering_user()) {
-                    this.send_reply({command: click_command,
-                                     domain: this.menu_param.domain,
-                                     userid: this.menu_param.userid});
-                }
+        }, () => { /*chrome.untime.lastError;*/ });
+    }
+
+    static add_listener() {
+        chrome.contextMenus.onClicked.addListener((info)=> {
+            if (info.menuItemId != BGContextMenuController.CONTEXT_MENUS_ID) {
+                return;
             }
-        });
-        chrome.tabs.onActivated.addListener((active_info)=> {
-            // tabが切り替わったら追加項目を非表示化する
-            // 拡張機能管轄外のtabで追加項目が出しっぱなしになるため
-            chrome.contextMenus.update(this.context_menu_item_id, {
-                "visible": false
-            });
-        });
-        chrome.tabs.onUpdated.addListener((info)=> {
-            // 管轄のtabがupdateされたら追加項目を非表示化する
-            // 拡張機能管轄外のURLへ移動した際、出っぱなしになるため
-            if (this.is_connected_tab(info)) {
-                chrome.contextMenus.update(this.context_menu_item_id, {
-                    "visible": false
-                });
+            const click_command = gMuteParam.click_command;
+            if (click_command == MessageUtil.command_filtering_domain() ||
+                click_command == MessageUtil.command_filtering_user()) {
+                BGMessageSender.send_reply(
+                    {command: click_command,
+                     domain: gMuteParam.domain,
+                     userid: gMuteParam.userid});
             }
         });
     }
 
-    /*!
-     */
-    constructor() {
-        super();
-        this.menu_param = {};
-        this.context_menu_item_id = null;
-    }
 }
+var gMuteParam = new MuteParam();
+chrome.storage.local.get(BGContextMenuController.CONTEXT_MENUS_ID, (item) => {
+    if (item != null) {
+        if (gMuteParam.domain == '' && gMuteParam.userid == '') {
+            gMuteParam = item[BGContextMenuController.CONTEXT_MENUS_ID];
+        }
+    }
+});

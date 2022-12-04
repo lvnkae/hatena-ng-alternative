@@ -36,6 +36,12 @@ class HatenaBookmarkFilter {
         this.initialize();
     }
 
+    clear_context_menu() {
+        if (this.contextmenu_controller != null) {
+            this.contextmenu_controller.clear();
+        }
+    }
+
     callback_domloaded() {
         const loc = this.current_location;
         const ldata = this.storage.json;

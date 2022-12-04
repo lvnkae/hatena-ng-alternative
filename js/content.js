@@ -55,7 +55,6 @@ class Content {
     }
 
     kick() {
-        MessageUtil.send_message({command:MessageUtil.command_start_content()});
         this.load();
     }
 
@@ -73,6 +72,22 @@ class Content {
                 this.callback_domloaded();
             }
         });
+        document.addEventListener('visibilitychange', ()=> {
+            if (document.visibilityState === 'visible') {
+                if (this.filter_instance != null) {
+                    this.filter_instance.clear_context_menu();
+                }
+            } else {
+                // focusを失ったらcontextMenuを消しとく
+                MessageUtil.send_message(
+                    {command: MessageUtil.command_update_contextmenu()});
+            }
+        });
+        window.addEventListener('beforeunload', ()=> {
+            // URL遷移するならcontextMenuを消す
+            MessageUtil.send_message(
+                {command: MessageUtil.command_update_contextmenu()});
+        });        
     }
 }
 
