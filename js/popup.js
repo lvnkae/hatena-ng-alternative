@@ -68,9 +68,15 @@ class Popup {
         this.textarea_filter_domain().dblclick(()=> {
             this.textarea_filter_domain_dblclick();
         });
+        this.textarea_import_storage().on('paste',(e)=> {
+            this.button_import_enable();
+        });
         //
         this.button_save().click(()=> {
             this.button_save_click();
+        });
+        this.button_import().click(()=> {
+            this.button_import_click();
         });
     }
 
@@ -96,6 +102,32 @@ class Popup {
     textarea_filter_ex_title() {
         return $("textarea[name=filter_ex_title]");
     }
+    textarea_export_storage() {
+        return $("textarea[name=export_storage]");
+    }
+    textarea_import_storage() {
+        return $("textarea[name=import_storage]");
+    }
+
+    button_save() {
+        return $("button[name=req_save]");
+    }
+    button_save_enable() {
+        this.button_save().prop("disabled", false);
+    }
+    button_save_disable() {
+        this.button_save().prop("disabled", true);
+    }
+    button_import() {
+        return $("button[name=req_import]");
+    }
+    button_import_enable() {
+        this.button_import().prop("disabled", false);
+    }
+    button_import_disable() {
+        this.button_import().prop("disabled", true);
+    }
+
     textarea_filter_domain_keyup() {
         if (this.textarea_filter_domain().val() != this.storage.ng_domain_text) {
             this.button_save().prop("disabled", false);
@@ -167,6 +199,11 @@ class Popup {
     selectbox_filter() {
         return $(this.selectbox_filter_key());
     }
+
+    selectbox_value_ex_title() {
+        return "ng_ex_title";
+    }
+
     is_selected_ng_domain() {
         return this.selectbox_filter().val() == "ng_domain";
     }
@@ -179,47 +216,56 @@ class Popup {
     is_selected_ng_comment() {
         return this.selectbox_filter().val() == "ng_comment";
     }
-    selectbox_value_ex_title() {
-        return "ng_ex_title";
+    is_selected_export_storage() {
+        return this.selectbox_filter().val() == "export";
     }
-    selectbox_filter_change()
-    {
+    is_selected_import_storage() {
+        return this.selectbox_filter().val() == "import";
+    }    
+
+    hide_textarea_all() {
+        this.textarea_filter_domain().hide();
+        this.textarea_filter_title().hide();
+        this.textarea_filter_user().hide();
+        this.textarea_filter_comment().hide();
+        this.textarea_filter_ex_title().hide();
+        this.textarea_export_storage().hide();
+        this.textarea_import_storage().hide();
+        this.textarea_import_storage().val("");
+    }
+    show_export_storage() {
+        this.textarea_export_storage().val(StoragePorter.export(this.storage.json));
+        this.textarea_export_storage().show();
+        this.button_save().hide();
+    }
+    show_import_storage() {
+        this.textarea_import_storage().show();
+        this.button_save().hide();
+        this.button_import().show();
+    }    
+    
+    selectbox_filter_change() {
+        this.hide_textarea_all();
+        this.button_import().hide();
+        this.button_save().show();
         if (this.is_selected_ng_domain()) {
             this.textarea_filter_domain().show();
-            this.textarea_filter_title().hide();
-            this.textarea_filter_user().hide();
-            this.textarea_filter_comment().hide();
-            this.textarea_filter_ex_title().hide();
         } else if (this.is_selected_ng_title()) {
-            this.textarea_filter_domain().hide();
             this.textarea_filter_title().show();
-            this.textarea_filter_user().hide();
-            this.textarea_filter_comment().hide();
-            this.textarea_filter_ex_title().hide();
         } else if (this.is_selected_ng_user()) {
-            this.textarea_filter_domain().hide();
-            this.textarea_filter_title().hide();
             this.textarea_filter_user().show();
-            this.textarea_filter_comment().hide();
-            this.textarea_filter_ex_title().hide();
         } else if (this.is_selected_ng_comment()) {
             this.textarea_filter_domain().hide();
-            this.textarea_filter_title().hide();
-            this.textarea_filter_user().hide();
             this.textarea_filter_comment().show();
-            this.textarea_filter_ex_title().hide();
+        } else if (this.is_selected_export_storage()) {
+            this.show_export_storage();
+        } else if (this.is_selected_import_storage()) {
+            this.show_import_storage();
         } else {
-            this.textarea_filter_domain().hide();
-            this.textarea_filter_title().hide();
-            this.textarea_filter_user().hide();
-            this.textarea_filter_comment().hide();
             this.textarea_filter_ex_title().show();
         }
     }
 
-    button_save() {
-        return $("button[name=req_save]");
-    }
     button_save_click() {
         this.storage.clear();
         if (this.ex_title_domain != '') {
@@ -276,11 +322,18 @@ class Popup {
         this.badge.update(this.storage);
         this.storage.update_text();
     }
-    button_save_enable() {
-        this.button_save().prop("disabled", false);
-    }
-    button_save_disable() {
-        this.button_save().prop("disabled", true);
+
+    button_import_click() {
+        const importer = new StoragePorter(this.storage.json);
+        if (importer.import(this.textarea_import_storage().val())) {
+            this.storage.json = importer.json;
+            this.storage.save();
+            this.storage.update_text();
+            this.updateTextarea();
+            this.textarea_import_storage().val("[[OK]]");
+        } else {
+            this.textarea_import_storage().val("[[ERROR]]");
+        }
     }
 
     updateCheckbox() {

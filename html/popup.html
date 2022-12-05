@@ -23,20 +23,25 @@
                 <option value="ng_title">非表示タイトル</option>
                 <option value="ng_user">非表示ユーザー</option>
                 <option value="ng_comment">非表示コメント</option>
+                <option value="export">設定出力(export)</option>
+                <option value="import">設定入力(import)</option>
             </select>
             <p><textarea name="filter_domain" class="form-control" rows="8" cols="48"></textarea></p>
             <p><textarea name="filter_title" class="form-control" rows="8" cols="48" style="display:none"></textarea></p>
             <p><textarea name="filter_user" class="form-control" rows="8" cols="48" style="display:none"></textarea></p>
             <p><textarea name="filter_comment" class="form-control" rows="8" cols="48" style="display:none"></textarea></p>
             <p><textarea name="filter_ex_title" class="form-control" rows="8" cols="48" style="display:none"></textarea></p>
+            <p><textarea readonly name="export_storage" class="from-control" rows="10" cols="48" style="display:none"></textarea></p>
+            <p><textarea name="import_storage" class="from-control" rows="10" cols="48" style="display:none"></textarea></p>
             <button name="req_save" align="center" disabled>変更を保存する</button>
-
+            <button name="req_import" aign="center" style="display :none" disabled>読み込む</button>
           </div>
         </div>
         <script src="../js/jquery-3.3.1.min.js"></script>
         <script src="../js/message_utility.js"></script>
         <script src="../js/text_utility.js"></script>
         <script src="../js/storage_data.js"></script>
+        <script src="../js/storage_porter.js"></script>
         <script src="../js/popup.js"></script>
   </body>
 </html>
