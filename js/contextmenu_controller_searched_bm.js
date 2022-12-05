@@ -37,10 +37,4 @@ class ContextMenuController_SearchedBookmark extends ContextMenuController {
     get_command_function() {
         return ContextMenuController.update_contextmenu_by_domain;
     }
-
-    /*!
-     */
-    constructor(active) {
-        super(active);
-    }
 }

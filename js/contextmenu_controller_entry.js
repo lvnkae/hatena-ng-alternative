@@ -30,10 +30,4 @@ class ContextMenuController_Entry extends ContextMenuController {
     get_command_function() {
         return ContextMenuController.update_contextmenu_by_userid;
     }    
-
-    /*!
-     */
-    constructor(active) {
-        super(active);
-    }
 }
