@@ -27,6 +27,18 @@ class HatenaDOMUtil {
     }
 
     /*!
+     *  @brief  検索結果エントリの根ノードを探して返す
+     *  @param  node    キーノード
+     */
+    static find_searched_entry_root(node) {
+        return DOMUtil.search_upper_node($(node), (e)=> {
+            return e.localName == 'li' &&
+                   e.className != null &&
+                   e.className.indexOf('js-user-bookmark-item') >= 0;
+        });
+    }
+
+    /*!
      *  @brief  ★関連の根ノードを探して返す
      *  @param  node    キーノード
      */

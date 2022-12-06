@@ -170,6 +170,7 @@ class HatenaBookmarkFilter {
                 this.filtering_bookmark_column();
                 this.filtering_bookmark_recommend();
                 this.filtering_bookmark_issue();
+                this.filtering_bookmark_ranking();
             } else if (loc.in_entry_page()) {
                 this.filtering_bookmark_entry_relation();
                 this.filtering_bookmark_entry_recommend();
@@ -297,6 +298,40 @@ class HatenaBookmarkFilter {
             if (this.bookmark_filter(href, title)) {
                 $(elem_title).parent().detach();
             }
+        });
+    }
+
+    /*!
+     *  @brief  ブックマーク(ranking)にフィルタをかける
+     *  @note   トップページに「あとで読むランキング」
+     *  @note   (1列目:users/2列目:title+link/3列目:"あとでよむ"スイッチ)
+     */
+    filtering_bookmark_ranking() {
+        $("section#btop-ranking").each((inx, sec)=> {
+            $("div.entrylist-readlater-ranking-body").each((inx, e_body)=> {
+                const e_title = $(e_body).find("h3.entrylist-readlater-ranking-title");
+                const e_domain = $(e_body).find("p.entrylist-readlater-ranking-domain");
+                if (e_title.length == 0 || e_domain.length == 0) {
+                    return;
+                }
+                const a_tag = $(e_title).find("a");
+                if (a_tag.length == 0) {
+                    return;
+                }
+                const href = $(a_tag).attr("href");
+                const title = $(a_tag).text();
+                //
+                const span_tag = $(e_domain).find("span");
+                if (span_tag.length == 0) {
+                    return;
+                }
+                const domain = $(span_tag).text();
+                const url = this.decide_filtering_url(href, domain);
+                if (this.bookmark_filter(url, title)) {
+                    $(e_title).detach();
+                    $(e_domain).parent().detach();
+                }
+            });
         });
     }
 
@@ -454,7 +489,10 @@ class HatenaBookmarkFilter {
             const domain = text_utility.remove_new_line_and_space($(a_tag_domain[0]).text());
             const url = this.decide_filtering_url(href, domain);
             if (this.bookmark_filter(url, title)) {
-                $(elem_title).parent().parent().detach();
+                const e = HatenaDOMUtil.find_searched_entry_root(elem_title);
+                if (e != null) {
+                    $(e).detach();
+                }
             }
         });
     }

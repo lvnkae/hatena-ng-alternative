@@ -27,11 +27,7 @@ class ContextMenuController_SearchedBookmark extends ContextMenuController {
      *  @param  element 右クリックされたelement
      */
     get_base_node(element) {
-        return DOMUtil.search_upper_node($(element), (e)=> {
-            return e.localName == 'li' &&
-                   e.className != null &&
-                   e.className.indexOf('js-user-bookmark-item') >= 0;
-        });
+        return HatenaDOMUtil.find_searched_entry_root(element);
     }
 
     get_command_function() {
