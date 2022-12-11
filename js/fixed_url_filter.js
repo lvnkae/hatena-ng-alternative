@@ -61,6 +61,7 @@ class fixedURLFilter {
             'himasoku.com',
             'hosyusokuhou.jp',
             'i2chmeijin.blog.fc2.com',
+            'itainews.com',
             'jin115.com',
             'kabumatome.doorblog.jp',
             'katasumisokuhou.blog.jp',
