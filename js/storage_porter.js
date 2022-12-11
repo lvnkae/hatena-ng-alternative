@@ -190,7 +190,7 @@ class StoragePorter {
         const SPR_INDEX_DOMAIN = 1;
         const SPR_INDEX_NG_WORD_TAG = 2
         const SPR_INDEX_NG_WORD_TOP = 3;
-        let dm_filter = {};
+        let dm_filter = {sub_dirs:[]};
         dm_filter.keyword = split_row[SPR_INDEX_DOMAIN];
         if (split_row[SPR_INDEX_NG_WORD_TAG] == this.CSV_TAG_DOMAIN_NG_WORD) {
             dm_filter.black_titles = [];
