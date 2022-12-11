@@ -19,8 +19,8 @@ class BGContextMenuController extends BGMessageSender {
             }
         } else {
             const click_command = request.click_command;
-            if (MessageUtil.command_filtering_domain() ||
-                MessageUtil.command_filtering_user()) {
+            if (click_command == MessageUtil.command_filtering_domain() ||
+                click_command == MessageUtil.command_filtering_user()) {
                 const param = {click_command: click_command,
                                domain: request.domain,
                                userid: request.userid};
