@@ -15,6 +15,8 @@ class Content {
                         if (this.storage.json.active) {
                             this.filter_instance.filtering_bookmark();
                         }
+                        MessageUtil.send_message(
+                            {command:MessageUtil.command_add_mute_item()});
                     }
                 } else
                 if (request.command == MessageUtil.command_filtering_user()) {
@@ -26,6 +28,8 @@ class Content {
                             HatenaDOMUtil.remove_filtered_marker();
                             this.filter_instance.filtering_entry_user();
                         }
+                        MessageUtil.send_message(
+                            {command:MessageUtil.command_add_mute_item()});
                     }
                 }
                 return true;

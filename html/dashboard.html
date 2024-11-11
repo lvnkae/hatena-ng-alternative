@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>はてなフィルタ - dashboard</title>
+        <style type="text/css">
+            .tabButton {
+                border: 0;
+                padding: 0.7em 1.4em;
+                background-color:#FFFFFF;
+            }
+            .tabButton:hover {
+                background-color:#CCCCEE;
+                border-bottom: 3px solid #BBBBDD;
+                cursor:pointer;
+            }
+            .tabButton.selected {
+                background-color:#FFFFFF;
+                border-bottom: 3px solid #CC0000;
+                color: #CC0000;
+            }
+            div.pagetop {
+                position:relative;
+                top:12px;
+            }
+            div.pagetop#option {
+                top:0px;
+                height:96px;
+            }
+            textarea[name=filter_domain] {
+                line-height:1.0;
+                width:49%;
+            }
+            textarea[name=filter_ex_domain] {
+                width:49%;
+            }
+            textarea[name=filter_title],
+            textarea[name=filter_user],
+            textarea[name=filter_comment] {
+                width:99%;
+            }
+            textarea[name=export_storage],
+            textarea[name=import_storage] {
+                width:75%;
+            }
+            .cursor {
+                position:absolute;
+                background-color: rgba(128,128,128,.25);
+            }
+            .subheading, .checkbox, .channelname {
+                position:absolute;
+            }
+        </style>
+
+    </head>
+    <body>
+        <div class="tabButtons">
+            <button class="tabButton selected" name="tab_domain_filter" type="button">非表示ドメイン</button>
+            <button class="tabButton" name="tab_title_filter" type="button">非表示タイトル</button>
+            <button class="tabButton" name="tab_user_filter" type="button">非表示ユーザー</button>
+            <button class="tabButton" name="tab_comment_filter" type="button">非表示コメント</button>
+            <button class="tabButton" name="tab_imexport" type="button">設定入出力</button>
+            <button class="tabButton" name="tab_option" type="button">オプション</button>
+        </div>
+        <br>
+        <div class="main">
+            <select name="select_imexport" style="display:none">
+                <option value="export">設定出力(export)</option>
+                <option value="import">設定入力(import)</option>
+            </select>
+
+            <div class="pagetop" id="filter_domain">
+                <div class = "cursor" id="filter_domain"></div>
+                <div class = "subheading" id="filter_ex_domain"></div>
+                <textarea name="filter_domain" rows="60%" cols="1"></textarea>
+                <textarea name="filter_ex_domain" rows="50%" cols="1" style="display:none"></textarea>
+            </div>
+            <div class="pagetop" id="filter_title" style="display:none">
+                <textarea name="filter_title" rows="60%" cols="1" style="display:none;"></textarea>
+            </div>
+            <div class="pagetop" id="filter_user" style="display:none">
+                <textarea name="filter_user" rows="60%" cols="1" style="display:none;"></textarea>
+            </div>
+            <div class="pagetop" id="filter_comment" style="display:none">
+                <textarea name="filter_comment" rows="60%" cols="1" style="display:none;"></textarea>
+            </div>
+            <div class ="pagetop" id="imexport" style="display:none">
+                <textarea readonly name="export_storage" rows="60%" cols="1" style="display:none"></textarea>
+                <textarea name="import_storage" rows="60%" cols="1" style="display:none"></textarea>
+            </div>
+            <div class ="pagetop" id="option" style="display:none">
+                <div class = "checkbox" id="option">
+                    <input id="disable_thumbnail" type="checkbox" style="display:none">
+                    <label id="disable_thumbnail" style="display:none">サムネイルを除去する<br></label>
+                </div>
+            </div>
+            <br><button name="req_save" disabled>変更を保存する</button>
+            <button name="req_import" style="display :none" disabled>読み込む</button>        
+        </div>
+        <script src="../js/jquery-3.3.1.min.js"></script>
+        <script src="../js/message_utility.js"></script>
+        <script src="../js/text_utility.js"></script>
+        <script src="../js/dom_utility.js"></script>
+        <script src="../js/storage_data.js"></script>
+        <script src="../js/storage_porter.js"></script>
+        <script src="../js/setting_base.js"></script>
+        <script src="../js/dashboard.js"></script>
+  </body>
+</html>

@@ -47,5 +47,5 @@
    "name": "はてなフィルタ",
    "permissions": [ "storage", "contextMenus" ],
    "short_name": "Hatena Filter",
-   "version": "1.0.3.0"
+   "version": "1.0.4.0"
 }
