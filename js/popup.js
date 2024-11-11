@@ -22,27 +22,22 @@ class Badge  {
 /*!
  *  @brief  popup.js本体
  */
-class Popup {
+class Popup extends SettingBase {
 
     constructor() {
-        this.initialize();
+        super();
     }
 
     initialize() {
+        super.initialize();
         this.badge = new Badge();
-        this.storage = new StorageData();
         this.storage.load().then(()=> {
             this.updateCheckbox();
             this.updateTextarea();
             this.badge.update(this.storage);
         });
-        this.textarea_ex_title_val = [];
-        this.ex_title_domain = '';
         //
         this.checkbox_sw_filter().change(()=> {
-            this.button_save_enable();
-        });
-        this.checkbox_sw_thumbnail().change(()=> {
             this.button_save_enable();
         });
         //
@@ -62,70 +57,33 @@ class Popup {
         this.textarea_filter_comment().keyup(()=> {
             this.textarea_filter_comment_keyup();
         });
-        this.textarea_filter_ex_title().keyup(()=> {
-            this.textarea_filter_ex_title_keyup();
+        this.textarea_filter_ex_domain().keyup(()=> {
+            this.textarea_filter_ex_domain_keyup();
         });
         this.textarea_filter_domain().dblclick(()=> {
             this.textarea_filter_domain_dblclick();
-        });
-        this.textarea_import_storage().on('paste',(e)=> {
-            this.button_import_enable();
         });
         //
         this.button_save().click(()=> {
             this.button_save_click();
         });
-        this.button_import().click(()=> {
-            this.button_import_click();
+        this.button_detail().click(()=> {
+            this.button_detail_click();
         });
     }
 
     checkbox_sw_filter() {
         return  $("input[name=sw_filter]");
     }
-    checkbox_sw_thumbnail() {
-        return  $("input[name=sw_thumbnail]");
+    get_flag_enable_filter() {
+        return this.checkbox_sw_filter().prop("checked");
+    }
+    get_flag_disable_thumbnail() {
+        return this.flag_disable_thumbnail;
     }
 
-    textarea_filter_domain() {
-        return $("textarea[name=filter_domain]");
-    }
-    textarea_filter_title() {
-        return $("textarea[name=filter_title]");
-    }
-    textarea_filter_user() {
-        return $("textarea[name=filter_user]");
-    }
-    textarea_filter_comment() {
-        return $("textarea[name=filter_comment]");
-    }
-    textarea_filter_ex_title() {
-        return $("textarea[name=filter_ex_title]");
-    }
-    textarea_export_storage() {
-        return $("textarea[name=export_storage]");
-    }
-    textarea_import_storage() {
-        return $("textarea[name=import_storage]");
-    }
-
-    button_save() {
-        return $("button[name=req_save]");
-    }
-    button_save_enable() {
-        this.button_save().prop("disabled", false);
-    }
-    button_save_disable() {
-        this.button_save().prop("disabled", true);
-    }
-    button_import() {
-        return $("button[name=req_import]");
-    }
-    button_import_enable() {
-        this.button_import().prop("disabled", false);
-    }
-    button_import_disable() {
-        this.button_import().prop("disabled", true);
+    button_detail() {
+        return $("button[name=detail");
     }
 
     textarea_filter_domain_keyup() {
@@ -148,9 +106,9 @@ class Popup {
             this.button_save().prop("disabled", false);
         }
     }
-    textarea_filter_ex_title_keyup() {
-        if (this.textarea_filter_ex_title().val()
-            != this.textarea_ex_title_val[this.ex_title_domain]) {
+    textarea_filter_ex_domain_keyup() {
+        if (this.textarea_filter_ex_domain().val()
+            != this.ex_domain_buffer[this.ex_domain_last]) {
             this.button_save().prop("disabled", false);
         }
     }
@@ -163,16 +121,16 @@ class Popup {
         if (domain == null) {
             return;
         }
-        // 前ex_titleの後始末
-        if (this.ex_title_domain != '') {
-            var prev_domain = this.ex_title_domain;
-            this.textarea_ex_title_val[prev_domain] = this.textarea_filter_ex_title().val();
+        // 前ex_domainの後始末
+        if (this.ex_domain_last != '') {
+            var prev_domain = this.ex_domain_last;
+            this.ex_domain_buffer[prev_domain] = this.textarea_filter_ex_domain().val();
             //
             var key = this.selectbox_filter_key()
                     + " option[value=" + this.selectbox_value_ex_title() + "]";
             $(key).remove();
         }
-        this.ex_title_domain = domain;
+        this.ex_domain_last = domain;
         // selectboxに「$(domain)の非表示タイトル」を追加
         {
             const val = this.selectbox_value_ex_title();
@@ -180,13 +138,13 @@ class Popup {
             const text = domain.slice(0, max_disp_domain) + 'の非表示タイトル';
             this.selectbox_filter().append($("<option>").val(val).text(text));
         }
-        // ex_title用textareaの準備
+        // ex_domain用textareaの準備
         {
-            if (domain in this.textarea_ex_title_val) {
-                this.textarea_filter_ex_title().val(this.textarea_ex_title_val[domain]);
+            if (domain in this.ex_domain_buffer) {
+                this.textarea_filter_ex_domain().val(this.ex_domain_buffer[domain]);
             } else {
-                this.textarea_filter_ex_title().val('');
-                this.textarea_ex_title_val[domain] = '';
+                this.textarea_filter_ex_domain().val('');
+                this.ex_domain_buffer[domain] = '';
             }
         }
         this.selectbox_filter().val(this.selectbox_value_ex_title());
@@ -216,37 +174,17 @@ class Popup {
     is_selected_ng_comment() {
         return this.selectbox_filter().val() == "ng_comment";
     }
-    is_selected_export_storage() {
-        return this.selectbox_filter().val() == "export";
-    }
-    is_selected_import_storage() {
-        return this.selectbox_filter().val() == "import";
-    }    
 
     hide_textarea_all() {
         this.textarea_filter_domain().hide();
         this.textarea_filter_title().hide();
         this.textarea_filter_user().hide();
         this.textarea_filter_comment().hide();
-        this.textarea_filter_ex_title().hide();
-        this.textarea_export_storage().hide();
-        this.textarea_import_storage().hide();
-        this.textarea_import_storage().val("");
+        this.textarea_filter_ex_domain().hide();
     }
-    show_export_storage() {
-        this.textarea_export_storage().val(StoragePorter.export(this.storage.json));
-        this.textarea_export_storage().show();
-        this.button_save().hide();
-    }
-    show_import_storage() {
-        this.textarea_import_storage().show();
-        this.button_save().hide();
-        this.button_import().show();
-    }    
     
     selectbox_filter_change() {
         this.hide_textarea_all();
-        this.button_import().hide();
         this.button_save().show();
         if (this.is_selected_ng_domain()) {
             this.textarea_filter_domain().show();
@@ -257,109 +195,28 @@ class Popup {
         } else if (this.is_selected_ng_comment()) {
             this.textarea_filter_domain().hide();
             this.textarea_filter_comment().show();
-        } else if (this.is_selected_export_storage()) {
-            this.show_export_storage();
-        } else if (this.is_selected_import_storage()) {
-            this.show_import_storage();
         } else {
-            this.textarea_filter_ex_title().show();
+            this.textarea_filter_ex_domain().show();
         }
     }
 
     button_save_click() {
-        this.storage.clear();
-        if (this.ex_title_domain != '') {
-            this.textarea_ex_title_val[this.ex_title_domain] = this.textarea_filter_ex_title().val();
+        if (this.ex_domain_last != '') {
+            this.ex_domain_buffer[this.ex_domain_last] = this.textarea_filter_ex_domain().val();
         }
+        this.save();
         //
-        {
-            var filter = text_utility.split_by_new_line(this.textarea_filter_domain().val());
-            for (const word of filter) {
-                if (word != "") {
-                    var ng_url = {};
-                    ng_url.keyword = word;
-                    if (word in this.textarea_ex_title_val) {
-                        ng_url.black_titles =
-                            text_utility.split_by_new_line(this.textarea_ex_title_val[word]);
-                    } else {
-                        ng_url.black_titles = [];
-                    }
-                    ng_url.sub_dirs = [];
-                    //
-                    this.storage.json.ng_domain.push(ng_url);
-                }
-            }
-        }
-        {
-            var filter = text_utility.split_by_new_line(this.textarea_filter_title().val());
-            for (const word of filter) {
-                if (word != "") {
-                    this.storage.json.ng_title.push(word);
-                }
-            }
-        }
-        {
-            var filter = text_utility.split_by_new_line(this.textarea_filter_user().val());
-            for (const word of filter) {
-                if (word != "") {
-                    this.storage.json.ng_user.push(word);
-                }
-            }
-        }
-        {
-            var filter = text_utility.split_by_new_line(this.textarea_filter_comment().val());
-            for (const word of filter) {
-                if (word != "") {
-                    this.storage.json.ng_comment.push(word);
-                }
-            }
-        }
-        this.storage.json.active = this.checkbox_sw_filter().prop("checked");
-        this.storage.json.ng_thumbnail = this.checkbox_sw_thumbnail().prop("checked");
-        this.storage.save();
-        //
-        this.button_save_disable();
         this.badge.update(this.storage);
-        this.storage.update_text();
     }
 
-    button_import_click() {
-        const importer = new StoragePorter(this.storage.json);
-        if (importer.import(this.textarea_import_storage().val())) {
-            this.storage.json = importer.json;
-            this.storage.save();
-            this.storage.update_text();
-            this.updateTextarea();
-            this.textarea_import_storage().val("[[OK]]");
-        } else {
-            this.textarea_import_storage().val("[[ERROR]]");
-        }
+    button_detail_click() {
+        chrome.tabs.create({url: './html/dashboard.html'}, tab => {});
     }
 
     updateCheckbox() {
         var json = this.storage.json;
         this.checkbox_sw_filter().prop("checked", json.active);
-        this.checkbox_sw_thumbnail().prop("checked", json.ng_thumbnail);
-    }
-
-    updateTextarea() {
-        this.textarea_filter_domain().val(this.storage.ng_domain_text);
-        this.textarea_filter_title().val(this.storage.ng_title_text);
-        this.textarea_filter_user().val(this.storage.ng_user_text);
-        this.textarea_filter_comment().val(this.storage.ng_comment_text);
-        // ex_title用の疑似textarea
-        {
-            const nlc = text_utility.new_line_code();
-            this.textarea_ex_title_val = [];
-            for (const ngu of this.storage.json.ng_domain) {
-                var bt_text = "";
-                for (const bt of ngu.black_titles) {
-                    bt_text += bt + nlc;
-                }
-                this.textarea_ex_title_val[ngu.keyword] = bt_text;
-            }
-
-        }
+        this.flag_disable_thumbnail = json.ng_thumbnail;
     }
 };
 
