@@ -11,25 +11,27 @@ class Content {
                     const update
                         = this.storage.add_domain_filter_with_check(request.domain);
                     if (update && request.tab_active) {
-                        this.storage.save();
-                        if (this.storage.json.active) {
-                            this.filter_instance.filtering_bookmark();
-                        }
-                        MessageUtil.send_message(
-                            {command:MessageUtil.command_add_mute_item()});
+                        this.storage.save().then(()=>{
+                            if (this.storage.json.active) {
+                                this.filter_instance.filtering_bookmark();
+                            }
+                            MessageUtil.send_message(
+                                {command:MessageUtil.command_add_mute_item()});
+                        });
                     }
                 } else
                 if (request.command == MessageUtil.command_filtering_user()) {
                     const update
                         = this.storage.add_user_filter_with_check(request.userid);
                     if (update && request.tab_active) {
-                        this.storage.save();
-                        if (this.storage.json.active) {
-                            HatenaDOMUtil.remove_filtered_marker();
-                            this.filter_instance.filtering_entry_user();
-                        }
-                        MessageUtil.send_message(
-                            {command:MessageUtil.command_add_mute_item()});
+                        this.storage.save().then(()=>{
+                            if (this.storage.json.active) {
+                                HatenaDOMUtil.remove_filtered_marker();
+                                this.filter_instance.filtering_entry_user();
+                            }
+                            MessageUtil.send_message(
+                                {command:MessageUtil.command_add_mute_item()});
+                        });
                     }
                 }
                 return true;

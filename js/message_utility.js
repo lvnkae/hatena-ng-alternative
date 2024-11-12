@@ -16,7 +16,7 @@ class MessageUtil {
      *  @note   dashboard→extention
      */
     static send_message_to_relative_tab(message) {
-        chrome.tabs.query({}, (tabs)=> {
+        browser.tabs.query({}, (tabs)=> {
             for (const tab of tabs) {
                 chrome.tabs.sendMessage(tab.id, message).catch((error)=>{
                 });

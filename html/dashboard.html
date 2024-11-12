@@ -27,12 +27,14 @@
                 top:0px;
                 height:96px;
             }
-            textarea[name=filter_domain] {
+            textarea {
                 line-height:1.0;
-                width:49%;
+            }            
+            textarea[name=filter_domain] {
+                width:48.5%;
             }
             textarea[name=filter_ex_domain] {
-                width:49%;
+                width:48.5%;
             }
             textarea[name=filter_title],
             textarea[name=filter_user],
@@ -72,21 +74,21 @@
             <div class="pagetop" id="filter_domain">
                 <div class = "cursor" id="filter_domain"></div>
                 <div class = "subheading" id="filter_ex_domain"></div>
-                <textarea name="filter_domain" rows="60%" cols="1"></textarea>
-                <textarea name="filter_ex_domain" rows="50%" cols="1" style="display:none"></textarea>
+                <textarea name="filter_domain" rows="48%" cols="1"></textarea>
+                <textarea name="filter_ex_domain" rows="46%" cols="1" style="display:none"></textarea>
             </div>
             <div class="pagetop" id="filter_title" style="display:none">
-                <textarea name="filter_title" rows="60%" cols="1" style="display:none;"></textarea>
+                <textarea name="filter_title" rows="48%" cols="1" style="display:none;"></textarea>
             </div>
             <div class="pagetop" id="filter_user" style="display:none">
-                <textarea name="filter_user" rows="60%" cols="1" style="display:none;"></textarea>
+                <textarea name="filter_user" rows="48%" cols="1" style="display:none;"></textarea>
             </div>
             <div class="pagetop" id="filter_comment" style="display:none">
-                <textarea name="filter_comment" rows="60%" cols="1" style="display:none;"></textarea>
+                <textarea name="filter_comment" rows="48%" cols="1" style="display:none;"></textarea>
             </div>
             <div class ="pagetop" id="imexport" style="display:none">
-                <textarea readonly name="export_storage" rows="60%" cols="1" style="display:none"></textarea>
-                <textarea name="import_storage" rows="60%" cols="1" style="display:none"></textarea>
+                <textarea readonly name="export_storage" rows="48%" cols="1" style="display:none"></textarea>
+                <textarea name="import_storage" rows="47%" cols="1" style="display:none"></textarea>
             </div>
             <div class ="pagetop" id="option" style="display:none">
                 <div class = "checkbox" id="option">
@@ -97,7 +99,7 @@
             <br><button name="req_save" disabled>変更を保存する</button>
             <button name="req_import" style="display :none" disabled>読み込む</button>        
         </div>
-        <script src="../js/jquery-3.3.1.min.js"></script>
+        <script src="../js/jquery-3.3.1.js"></script>
         <script src="../js/message_utility.js"></script>
         <script src="../js/text_utility.js"></script>
         <script src="../js/dom_utility.js"></script>

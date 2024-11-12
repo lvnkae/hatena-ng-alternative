@@ -210,7 +210,7 @@ class Popup extends SettingBase {
     }
 
     button_detail_click() {
-        chrome.tabs.create({url: './html/dashboard.html'}, tab => {});
+        browser.tabs.create({url: './dashboard.html'}, tab => {});
     }
 
     updateCheckbox() {
